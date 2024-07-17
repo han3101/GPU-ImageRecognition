@@ -368,10 +368,10 @@ Image& Image::resizeBilinear_cpu(uint16_t nw, uint16_t nh) {
     return *this;
 }
 
-Image& Image::local_binary_pattern() {
+Image& Image::local_binary_pattern_cpu() {
 	if(channels > 1) {
 		std::cout<<"Image is not grayscale.<<\n";
-		this->grayscale_lum_cpu();
+		this->grayscale_avg_cpu();
 	}
 
 	uint8_t* newData = new uint8_t[w*h];

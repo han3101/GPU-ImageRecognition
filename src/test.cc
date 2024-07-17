@@ -188,3 +188,29 @@ TEST(ImageTest, 1DDynamicGaus3Clampborder) {
 
     EXPECT_EQ(is_black, 1);
 }
+
+TEST(ImageTest, local_binary_pattern) {
+
+    Image testHD("imgs/cat.jpeg");
+
+    ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
+
+    Image cpu = testHD;
+
+    testHD.local_binary_pattern_cpu();
+
+    OpenCLImageProcessor processor;
+
+    processor.local_binary_pattern(cpu);
+    processor.diffmap(testHD, cpu);
+    // auto start = std::chrono::high_resolution_clock::now();
+
+    int is_black = is_image_black(testHD);
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end - start;
+    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+
+
+    EXPECT_EQ(is_black, 1);
+}

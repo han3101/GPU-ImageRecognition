@@ -79,6 +79,6 @@ public:
 	Image& resizeNN(uint16_t nw, uint16_t nh);
 	Image& resizeBilinear_cpu(uint16_t nw, uint16_t nh);
 
-	Image& local_binary_pattern();
+	Image& local_binary_pattern_cpu();
 
 };
