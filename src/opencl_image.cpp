@@ -150,7 +150,7 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
 
 }
 
-void OpenCLImageProcessor::grayscale_avg_channels(Image& image) {
+void OpenCLImageProcessor::grayscale_lum(Image& image) {
 
     if(image.channels < 3) {
 		std::cout<<"Image "<<&image<<" has less than 3 channels, it is assumed to already be grayscale."<<std::endl;
@@ -159,7 +159,9 @@ void OpenCLImageProcessor::grayscale_avg_channels(Image& image) {
 
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    size_t bytes_n = image.w * image.h;
+    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_n);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/grayscale.cl");
@@ -175,9 +177,10 @@ void OpenCLImageProcessor::grayscale_avg_channels(Image& image) {
     }
 
     // Load in kernel args
-    cl::Kernel kernel(program, "grayscale_avg_channels");
+    cl::Kernel kernel(program, "grayscale_lum");
     kernel.setArg(0, data_d);
-    kernel.setArg(1, image.channels);
+    kernel.setArg(1, output_d);
+    kernel.setArg(2, image.channels);
 
     // Set dimensions
     cl::NDRange global(image.w * image.h);
@@ -193,8 +196,14 @@ void OpenCLImageProcessor::grayscale_avg_channels(Image& image) {
 
     queue.finish();
 
+    uint8_t* newData = new uint8_t[bytes_n];
+    delete[] image.data;
+    image.data = newData;
+    image.size = bytes_n;
+    image.channels = 1;
+
     // Read back the results
-    queue.enqueueReadBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_n, image.data);
 
 #ifdef PROFILE
     // Get profiling information

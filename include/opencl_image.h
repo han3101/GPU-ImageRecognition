@@ -14,7 +14,7 @@ public:
 
     void init();
     void grayscale_avg(Image& image);
-    void grayscale_avg_channels(Image& image);
+    void grayscale_lum(Image& image);
 
     void diffmap(Image& image1, Image& image2);
 
@@ -27,6 +27,8 @@ public:
     void std_convolve_clamp_to_0(Image& image, const Mask::BaseMask* mask);
     void std_convolve_clamp_to_border(Image& image, const Mask::BaseMask* mask);
     void std_convolve_clamp_to_cyclic(Image& image, const Mask::BaseMask* mask);
+
+    void local_binary_pattern(Image& image);
 
 private:
     cl::Context context;

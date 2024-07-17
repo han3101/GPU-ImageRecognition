@@ -43,6 +43,21 @@ private:
 			mask[i] = mask[i] / filter_factor;
 		}
 	}
+
+	uint8_t computeLBP(int col, int row) {
+		int centerIndex = row * w + col;
+		uint8_t center = data[centerIndex];
+		uint8_t lbp = 0;
+		lbp |= (data[(row-1) * w + (col-1)] >= center) << 7;
+		lbp |= (data[(row-1) * w + (col)] >= center) << 6;
+		lbp |= (data[(row-1) * w + (col+1)] >= center) << 5;
+		lbp |= (data[(row) * w + (col+1)] >= center) << 4;
+		lbp |= (data[(row+1) * w + (col+1)] >= center) << 3;
+		lbp |= (data[(row+1) * w + (col)] >= center) << 2;
+		lbp |= (data[(row+1) * w + (col-1)] >= center) << 1;
+		lbp |= (data[(row) * w + (col-1)] >= center) << 0;
+		return lbp;
+	}
 	
 
 public:
@@ -63,5 +78,7 @@ public:
 	Image& crop(uint16_t cx, uint16_t cy, uint16_t cw, uint16_t ch);
 	Image& resizeNN(uint16_t nw, uint16_t nh);
 	Image& resizeBilinear_cpu(uint16_t nw, uint16_t nh);
+
+	Image& local_binary_pattern();
 
 };

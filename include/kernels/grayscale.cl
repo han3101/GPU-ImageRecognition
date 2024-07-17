@@ -1,5 +1,6 @@
-__kernel void grayscale_avg_channels(
+__kernel void grayscale_lum(
     __global uchar* data, 
+    __global uchar* output,
     int channels
 ) 
 {
@@ -9,11 +10,9 @@ __kernel void grayscale_avg_channels(
     uchar r = data[pixelIndex];
     uchar g = data[pixelIndex + 1];
     uchar b = data[pixelIndex + 2];
-    uchar gray = (r + g + b) / 3;
+    uchar gray = (r * 0.2989 + g * 0.5870 + 0.1140 * b);
 
-    data[pixelIndex] = gray;
-    data[pixelIndex + 1] = gray;
-    data[pixelIndex + 2] = gray;
+    output[id] = gray;
 }
 
 __kernel void grayscale_avg(

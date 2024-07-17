@@ -116,6 +116,7 @@ Image& Image::grayscale_lum_cpu() {
 	else {
 		uint8_t* newData = new uint8_t[w*h];
 		
+		#pragma omp parallel for num_threads(4) schedule(static)
 		for (int i = 0; i < w * h; ++i) {
             int gray = 0.2126 * data[i * channels] + 0.7152 * data[i * channels + 1] + 0.0722 * data[i * channels + 2];
             newData[i] = static_cast<uint8_t>(gray);
@@ -365,4 +366,28 @@ Image& Image::resizeBilinear_cpu(uint16_t nw, uint16_t nh) {
     newImage = nullptr;
 
     return *this;
+}
+
+Image& Image::local_binary_pattern() {
+	if(channels > 1) {
+		std::cout<<"Image is not grayscale.<<\n";
+		this->grayscale_lum_cpu();
+	}
+
+	uint8_t* newData = new uint8_t[w*h];
+
+	// Exclude borders
+	#pragma omp parallel for num_threads(4) schedule(static)
+	for (int row=1; row < h-1; row++) {
+		for (int col=1; col < w-1; col++) {
+			uint8_t lbp = computeLBP(col, row);
+			// std::cout<<"row: "<<row<<" col: "<<col<<" lbp: "<<(int)lbp<<"\n";
+			newData[row * w + col] = lbp;
+		}
+	}
+
+	delete[] data;
+	data = newData;
+
+	return *this;
 }

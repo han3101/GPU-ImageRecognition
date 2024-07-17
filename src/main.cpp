@@ -7,10 +7,10 @@
 
 int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
-    Image testHD("imgs/testHD.jpeg");
+    // Image testHD("imgs/testHD.jpeg");
     Image cat("imgs/cat.jpeg");
 
-    Image gpu_test = testHD;
+    // Image gpu_test = testHD;
 
     // std::cout<<cat.channels<<"\n";
 
@@ -23,16 +23,17 @@ int main(int argc, char** argv) {
     // Mask::GaussianDynamic1D gaussianBlur2(1, true);
 
     // Timing the computation
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
-    // cat.grayscale_avg_cpu();
+    // cat.grayscale_avg_lum();
+    cat.local_binary_pattern();
 
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    // cat.write("output/grayscale.jpeg");
+    cat.write("output/lbp.jpeg");
 
     
     // // High res
@@ -55,7 +56,7 @@ int main(int argc, char** argv) {
     // elapsed = end - start;
     // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    OpenCLImageProcessor processor;
+    // OpenCLImageProcessor processor;
     // processor.std_convolve_clamp_to_0(gpu_test, &gaussianBlur);
     // processor.std_convolve_clamp_to_0(gpu_test, &gaussianBlur2);
     // processor.diffmap(gpu_cat, test);
@@ -63,7 +64,7 @@ int main(int argc, char** argv) {
     // processor.diffmap(gpu_test, testHD);
 
     // processor.diffmap(gpu_test, gpu_test);
-
+    // processor.grayscale_lum(gpu_test);
     // gpu_test.write("output/diff.jpeg");
 
 	return 0;
