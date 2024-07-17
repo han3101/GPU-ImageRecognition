@@ -14,6 +14,7 @@ public:
 
     void init();
     void grayscale_avg(Image& image);
+    void grayscale_avg_channels(Image& image);
 
     void diffmap(Image& image1, Image& image2);
 

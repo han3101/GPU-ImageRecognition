@@ -23,18 +23,16 @@ int main(int argc, char** argv) {
     // Mask::GaussianDynamic1D gaussianBlur2(1, true);
 
     // Timing the computation
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
 
-    cat.std_convolve_clamp_to_0_cpu(0, &gaussianBlur);
-    cat.std_convolve_clamp_to_0_cpu(1, &gaussianBlur);
-    cat.std_convolve_clamp_to_0_cpu(2, &gaussianBlur);
+    // cat.grayscale_avg_cpu();
 
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end - start;
+    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    cat.write("imgs/tests/2Dgaus3cat0.jpeg");
+    // cat.write("output/grayscale.jpeg");
 
     
     // // High res

@@ -89,7 +89,9 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
 
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    size_t bytes_n = image.w * image.h;
+    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_n);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/grayscale.cl");
@@ -106,6 +108,74 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
 
     // Load in kernel args
     cl::Kernel kernel(program, "grayscale_avg");
+    kernel.setArg(0, data_d);
+    kernel.setArg(1, output_d);
+    kernel.setArg(2, image.channels);
+
+    // Set dimensions
+    cl::NDRange global(image.w * image.h);
+    
+
+#ifdef PROFILE
+    // For Profiling
+    cl::Event event;
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+#else
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+#endif
+
+    queue.finish();
+
+    uint8_t* newData = new uint8_t[bytes_n];
+    delete[] image.data;
+    image.data = newData;
+    image.size = bytes_n;
+    image.channels = 1;
+
+    // Read back the results
+    queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_n, image.data);
+
+#ifdef PROFILE
+    // Get profiling information
+    cl_ulong time_start;
+    cl_ulong time_end;
+    event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+    event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+
+    // Compute the elapsed time in nanoseconds
+    cl_ulong elapsed_time = time_end - time_start;
+
+    std::cout << "Kernel execution time: " << (double) elapsed_time / 1000000 << " ms" << std::endl;
+#endif
+
+}
+
+void OpenCLImageProcessor::grayscale_avg_channels(Image& image) {
+
+    if(image.channels < 3) {
+		std::cout<<"Image "<<&image<<" has less than 3 channels, it is assumed to already be grayscale."<<std::endl;
+        return;
+	}
+
+    // Prepare memory
+    size_t bytes_i = image.size * sizeof(uint8_t);
+    cl::Buffer data_d(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+
+    // Load Kernel
+    std::string kernel_code = loadKernelSource("include/kernels/grayscale.cl");
+    //Appending the kernel, which is presented here as a string. 
+    cl::Program::Sources sources;
+    sources.push_back({ kernel_code.c_str(),kernel_code.length() });
+
+    // Compile program
+    cl::Program program(context, sources);
+    if (program.build({ device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+        exit(1);
+    }
+
+    // Load in kernel args
+    cl::Kernel kernel(program, "grayscale_avg_channels");
     kernel.setArg(0, data_d);
     kernel.setArg(1, image.channels);
 

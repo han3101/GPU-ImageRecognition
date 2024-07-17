@@ -89,26 +89,45 @@ Image& Image::grayscale_avg_cpu() {
 		printf("Image %p has less than 3 channels, it is assumed to already be grayscale.", this);
 	}
 	else {
+		uint8_t* newData = new uint8_t[w*h];
+
 		#pragma omp parallel for num_threads(4) schedule(static)
-		for(int i = 0; i < size; i+=channels) {
-			//(r+g+b)/3
-			int gray = (data[i] + data[i+1] + data[i+2])/3;
-			memset(data+i, gray, 3);
-		}
+		for (int i = 0; i < w * h; ++i) {
+            int gray = (data[i * channels] + data[i * channels + 1] + data[i * channels + 2]) / channels;
+            newData[i] = static_cast<uint8_t>(gray);
+        }
+		// Delete the old data array
+        delete[] data;
+
+        // Update the image properties
+        data = newData;
+        size = w * h;
+        channels = 1;
 	}
 	return *this;
 }
 
 
 Image& Image::grayscale_lum_cpu() {
+
 	if(channels < 3) {
 		printf("Image %p has less than 3 channels, it is assumed to already be grayscale.", this);
 	}
 	else {
-		for(int i = 0; i < size; i+=channels) {
-			int gray = 0.2126*data[i] + 0.7152*data[i+1] + 0.0722*data[i+2];
-			memset(data+i, gray, 3);
-		}
+		uint8_t* newData = new uint8_t[w*h];
+		
+		for (int i = 0; i < w * h; ++i) {
+            int gray = 0.2126 * data[i * channels] + 0.7152 * data[i * channels + 1] + 0.0722 * data[i * channels + 2];
+            newData[i] = static_cast<uint8_t>(gray);
+        }
+
+		// Delete the old data array
+        delete[] data;
+
+        // Update the image properties
+        data = newData;
+        size = w * h;
+        channels = 1;
 	}
 	return *this;
 }
