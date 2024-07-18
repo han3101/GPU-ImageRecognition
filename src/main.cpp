@@ -15,25 +15,32 @@ int main(int argc, char** argv) {
     // std::cout<<cat.channels<<"\n";
 
     // Mask::GaussianBlur3 gaussianBlur;
-    // Mask::EdgeSobelX sobelX;
-    // Mask::EdgeSobelY sobelY;
+    Mask::EdgeSobelX sobelX;
+    Mask::EdgeSobelY sobelY;
 
     // Mask::GaussianDynamic1D gaussianBlur1(1, false);
     Mask::GaussianDynamic2D gaussianBlur((int) 1);
     // Mask::GaussianDynamic1D gaussianBlur2(1, true);
 
     // Timing the computation
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
-    // // cat.grayscale_avg_lum();
+    // cat.grayscale_avg_lum();
     // cat.local_binary_pattern_cpu();
+    // cat.std_convolve_clamp_to_0_cpu(0, &sobelX);
+    // cat.std_convolve_clamp_to_0_cpu(1, &sobelX);
+    // cat.std_convolve_clamp_to_0_cpu(2, &sobelX);
+
+    // cat.std_convolve_clamp_to_0_cpu(0, &sobelY);
+    // cat.std_convolve_clamp_to_0_cpu(1, &sobelY);
+    // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    // cat.write("output/lbp.jpeg");
+    cat.write("output/lbp.jpeg");
 
     
     // // High res
@@ -64,8 +71,8 @@ int main(int argc, char** argv) {
     // processor.diffmap(gpu_test, testHD);
 
     // processor.diffmap(gpu_test, gpu_test);
-    processor.local_binary_pattern(cat);
-    cat.write("output/diff.jpeg");
+    // processor.local_binary_pattern(cat);
+    // cat.write("output/diff.jpeg");
 
 	return 0;
 }

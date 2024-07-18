@@ -23,7 +23,12 @@ Image::Image(int w, int h, int channels) : w(w), h(h), channels(channels) {
 }
 
 Image::Image(const Image& img) : Image(img.w, img.h, img.channels) {
-	memcpy(data, img.data, size);
+	if (img.data) {
+		memcpy(data, img.data, size);
+	} else {
+		data = nullptr;
+	}
+	
 }
 
 Image::~Image() {
@@ -96,6 +101,31 @@ Image& Image::grayscale_avg_cpu() {
             int gray = (data[i * channels] + data[i * channels + 1] + data[i * channels + 2]) / channels;
             newData[i] = static_cast<uint8_t>(gray);
         }
+		// Delete the old data array
+        delete[] data;
+
+        // Update the image properties
+        data = newData;
+        size = w * h;
+        channels = 1;
+	}
+	return *this;
+}
+
+Image& Image::grayscale_cpu() {
+
+	if(channels < 3) {
+		printf("Image %p has less than 3 channels, it is assumed to already be grayscale.", this);
+	}
+	else {
+		uint8_t* newData = new uint8_t[w*h];
+		
+		#pragma omp parallel for num_threads(4) schedule(static)
+		for (int i = 0; i < w * h; ++i) {
+            int gray = 0.299 * data[i * channels] + 0.587 * data[i * channels + 1] + 0.114 * data[i * channels + 2];
+            newData[i] = static_cast<uint8_t>(gray);
+        }
+
 		// Delete the old data array
         delete[] data;
 
@@ -208,8 +238,9 @@ Image& Image::std_convolve_clamp_to_0_cpu(uint8_t channel, const Mask::BaseMask*
 	uint32_t ker_w = mask->getWidth(), ker_h = mask->getHeight(), cr = mask->getCenterRow(), cc = mask->getCenterColumn();
 	const double* ker = mask->getData(); 
 
-
 	uint64_t center = cr*ker_w + cc;
+
+	#pragma omp parallel for num_threads(4) schedule(static)
 	for(uint64_t k=channel; k<size; k+=channels) {
 		double c = 0;
 		for(long i = -((long)cr); i<(long)ker_h-cr; ++i) {
@@ -228,6 +259,7 @@ Image& Image::std_convolve_clamp_to_0_cpu(uint8_t channel, const Mask::BaseMask*
 
 		new_data[k/channels] = (uint8_t)BYTE_BOUND((int)round(c));
 	}
+
 	for(uint64_t k=channel; k<size; k+=channels) {
 		data[k] = new_data[k/channels];
 	}
@@ -240,6 +272,8 @@ Image& Image::std_convolve_clamp_to_border_cpu(uint8_t channel, const Mask::Base
 	const double* ker = mask->getData(); 
 
 	uint64_t center = cr*ker_w + cc;
+
+	#pragma omp parallel for num_threads(4) schedule(static)
 	for(uint64_t k=channel; k<size; k+=channels) {
 		double c = 0;
 		for(long i = -((long)cr); i<(long)ker_h-cr; ++i) {
@@ -263,6 +297,7 @@ Image& Image::std_convolve_clamp_to_border_cpu(uint8_t channel, const Mask::Base
 		}
 		new_data[k/channels] = (uint8_t)BYTE_BOUND((int)round(c));
 	}
+
 	for(uint64_t k=channel; k<size; k+=channels) {
 		data[k] = new_data[k/channels];
 	}
@@ -390,4 +425,58 @@ Image& Image::local_binary_pattern_cpu() {
 	data = newData;
 
 	return *this;
+}
+
+void Image::integralImage_cpu(std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSobel, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt) {
+	
+	this->grayscale_cpu();
+	Image sobel = *this;
+
+	if (integralImageSobel) {
+		Mask::EdgeSobelX sobelX;
+    	Mask::EdgeSobelY sobelY;
+
+		sobel.std_convolve_clamp_to_0_cpu(0, &sobelX);
+		sobel.std_convolve_clamp_to_0_cpu(0, &sobelY);
+	}
+	
+	
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+			// Compute using summed area table (SAT) formula
+			int index = i * w + j;
+
+			if (integralImage) {
+				integralImage[index] = data[index] 
+                                + (i > 0 ? integralImage[index - w] : 0)
+                                + (j > 0 ? integralImage[index - 1] : 0)
+                                - (i > 0 && j > 0 ? integralImage[index - w - 1] : 0);
+			}
+
+			if (integralImageSquare) {
+				integralImageSquare[index] = (data[index] * data[index]) 
+                                + (i > 0 ? integralImageSquare[index - w] : 0)
+                                + (j > 0 ? integralImageSquare[index - 1] : 0)
+                                - (i > 0 && j > 0 ? integralImageSquare[index - w - 1] : 0);
+			}
+
+			if (integralImageSobel) {
+				integralImageSobel[index] = sobel.data[index] 
+                                + (i > 0 ? integralImageSobel[index - w] : 0)
+                                + (j > 0 ? integralImageSobel[index - 1] : 0)
+                                - (i > 0 && j > 0 ? integralImageSobel[index - w - 1] : 0);
+			}
+
+			if (integralImageTilt) {
+				// Use rotated summed area table (RSAT) formula instead
+				integralImageTilt[index] = data[index] 
+								+ (i > 0 && j > 0? integralImageTilt[index - w - 1]: 0)
+								+ (i > 0 && j < index - 1? integralImageTilt[index - w + 1]: 0)
+								- (i > 1? integralImageTilt[index - 2*w]: 0)
+								+ (i > 0? data[index - w]: 0);
+								
+			}
+			
+		}
+	}
 }

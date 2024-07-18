@@ -4,6 +4,7 @@
 #include <complex>
 #include <iostream>
 #include <vector>
+#include <memory>
 #include <omp.h>
 #include "masks.h"
 
@@ -64,6 +65,7 @@ public:
 	ImageType get_file_type(const char* filename);
 
 	Image& grayscale_avg_cpu();
+	Image& grayscale_cpu();
 	Image& grayscale_lum_cpu();
 
 	Image& diffmap_cpu(Image& img);
@@ -80,5 +82,7 @@ public:
 	Image& resizeBilinear_cpu(uint16_t nw, uint16_t nh);
 
 	Image& local_binary_pattern_cpu();
+
+	void integralImage_cpu(std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSobel, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt);
 
 };
