@@ -31,10 +31,10 @@ public:
     void local_binary_pattern(Image& image);
 
 private:
-    cl::Context context;
-    cl::Device device;
+    cl::Context m_context;
+    cl::Device m_device;
     // cl::Program program;
-    cl::CommandQueue queue;
+    cl::CommandQueue m_queue;
 
     void loadKernels();
     std::string loadKernelSource(const std::string& fileName);

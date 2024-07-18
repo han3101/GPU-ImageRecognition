@@ -1,5 +1,6 @@
 #include "image.h"
 #include "opencl_image.h"
+#include "viola_jones.h"
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
@@ -8,18 +9,19 @@
 int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
-    Image cat("imgs/cat.jpeg");
+    // Image cat("imgs/cat.jpeg");
+    Image tkl("imgs/tkl.jpg");
 
     // Image gpu_test = testHD;
 
     // std::cout<<cat.channels<<"\n";
 
     // Mask::GaussianBlur3 gaussianBlur;
-    Mask::EdgeSobelX sobelX;
-    Mask::EdgeSobelY sobelY;
+    // Mask::EdgeSobelX sobelX;
+    // Mask::EdgeSobelY sobelY;
 
     // Mask::GaussianDynamic1D gaussianBlur1(1, false);
-    Mask::GaussianDynamic2D gaussianBlur((int) 1);
+    // Mask::GaussianDynamic2D gaussianBlur((int) 1);
     // Mask::GaussianDynamic1D gaussianBlur2(1, true);
 
     // Timing the computation
@@ -35,12 +37,18 @@ int main(int argc, char** argv) {
     // cat.std_convolve_clamp_to_0_cpu(1, &sobelY);
     // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
+    ViolaJones faceTrack;
+
+    std::vector<Rect> faces = faceTrack.detect(tkl, faceTrack.haar_test);
+    std::cout<<"Hi"<<"\n";
+    faceTrack.draw(tkl, faces);
+
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    cat.write("output/lbp.jpeg");
+    tkl.write("output/lbp.jpeg");
 
     
     // // High res

@@ -227,8 +227,8 @@ TEST(ImageTest, simpleIntegralcpu) {
 
     std::vector<int> rotated_pixels = {
         1, 2, 3,
-        5, 11, 8,
-        12, 25, 20
+        7, 11, 11,
+        21, 29, 23
     };
 
     Image test(3, 3, 1);
@@ -240,21 +240,22 @@ TEST(ImageTest, simpleIntegralcpu) {
     ASSERT_NE(test.data, nullptr) << "Failed to load test image.";
 
     std::unique_ptr<u_int32_t[]> integralImage(new uint32_t[3 * 3]);
+    std::fill(integralImage.get(), integralImage.get() + 3 * 3, 0);
     std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
     std::unique_ptr<uint32_t[]> integralImageSquare = nullptr;
     std::unique_ptr<uint32_t[]> integralImageTilt(new uint32_t[3 * 3]);
+    std::fill(integralImageTilt.get(), integralImageTilt.get() + 3 * 3, 0);
 
     test.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
 
 
     EXPECT_EQ(integralImage[8], 45);
 
-    // for (int i = 0; i < 3; ++i) {
-    //     for (int j = 0; j < 3; ++j) {
-    //         std::cout<<i * 3 + j<<i<<j<<"\n";
-    //         EXPECT_EQ(integralImageTilt[i * 3 + j], rotated_pixels[i * 3 + j]);
-    //     }
-    // }
+    for (int i = 0; i < 9; ++i) {
+        // std::cout<<i * 3 + j<<i<<j<<"\n";
+        EXPECT_EQ(integralImageTilt[i], rotated_pixels[i]);
+        
+    }
 
 
 
@@ -273,6 +274,7 @@ TEST(ImageTest, simpleIntegralcpu) {
     }
 
     std::unique_ptr<u_int32_t[]> integralImage2(new uint32_t[5 * 5]);
+    std::fill(integralImage2.get(), integralImage2.get() + 5 * 5, 0);
     integralImageSobel = nullptr;
     integralImageSquare = nullptr;
     integralImageTilt = nullptr;

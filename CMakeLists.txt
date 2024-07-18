@@ -29,6 +29,7 @@ set(APPLICATION_SOURCE
     src/main.cpp
     src/image.cpp
     src/opencl_image.cpp
+    src/viola_jones.cpp
 )
 
 set(APPLICATION_HEADERS 
@@ -37,6 +38,7 @@ set(APPLICATION_HEADERS
     include/stb_image.h
     include/opencl_image.h
     include/masks.h
+    include/viola_jones.h
 )
 
 add_executable(${PROJECT_NAME} ${APPLICATION_SOURCE})

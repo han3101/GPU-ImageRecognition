@@ -43,12 +43,12 @@ void OpenCLImageProcessor::init() {
         exit(1);
     }
 
-    device = all_devices[0];
+    m_device = all_devices[0];
 #ifdef PROFILE
     std::cout << "Using device: " << device.getInfo<CL_DEVICE_NAME>() << "\n";
 #endif
 
-    size_t max_work_group_size = device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
+    size_t max_work_group_size = m_device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
 #ifdef PROFILE
     std::cout << "Maximum work-group size: " << max_work_group_size << "\n";
 #endif
@@ -61,8 +61,8 @@ void OpenCLImageProcessor::init() {
 #endif
 
     //create context, kernel source and queue to push commands to the device.
-    context = cl::Context({ device });
-    queue = cl::CommandQueue(context, device, properties);
+    m_context = cl::Context({ m_device });
+    m_queue = cl::CommandQueue(m_context, m_device, properties);
 
 }
 
@@ -90,8 +90,8 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_n = image.w * image.h;
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
-    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_n);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(m_context, CL_MEM_WRITE_ONLY, bytes_n);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/grayscale.cl");
@@ -100,9 +100,9 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -119,12 +119,12 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     uint8_t* newData = new uint8_t[bytes_n];
     delete[] image.data;
@@ -133,7 +133,7 @@ void OpenCLImageProcessor::grayscale_avg(Image& image) {
     image.channels = 1;
 
     // Read back the results
-    queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_n, image.data);
+    m_queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_n, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -160,8 +160,8 @@ void OpenCLImageProcessor::grayscale_lum(Image& image) {
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_n = image.w * image.h;
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
-    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_n);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(m_context, CL_MEM_WRITE_ONLY, bytes_n);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/grayscale.cl");
@@ -170,9 +170,9 @@ void OpenCLImageProcessor::grayscale_lum(Image& image) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -189,12 +189,12 @@ void OpenCLImageProcessor::grayscale_lum(Image& image) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     uint8_t* newData = new uint8_t[bytes_n];
     delete[] image.data;
@@ -203,7 +203,7 @@ void OpenCLImageProcessor::grayscale_lum(Image& image) {
     image.channels = 1;
 
     // Read back the results
-    queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_n, image.data);
+    m_queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_n, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -225,8 +225,8 @@ void OpenCLImageProcessor::diffmap(Image& image1, Image& image2) {
     // Prepare memory
     size_t bytes_i = image1.size * sizeof(uint8_t);
     size_t bytes_o = image2.size * sizeof(uint8_t);
-    cl::Buffer image1_d(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bytes_i, image1.data);
-    cl::Buffer image2_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_o, image2.data);
+    cl::Buffer image1_d(m_context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, bytes_i, image1.data);
+    cl::Buffer image2_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_o, image2.data);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/diffmap.cl");
@@ -235,9 +235,9 @@ void OpenCLImageProcessor::diffmap(Image& image1, Image& image2) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -266,15 +266,15 @@ void OpenCLImageProcessor::diffmap(Image& image1, Image& image2) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadBuffer(image1_d, CL_TRUE, 0, bytes_i, image1.data);
+    m_queue.enqueueReadBuffer(image1_d, CL_TRUE, 0, bytes_i, image1.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -295,8 +295,8 @@ void OpenCLImageProcessor::flipX(Image& image) {
 
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_WRITE, bytes_i);
-    queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    cl::Buffer data_d(m_context, CL_MEM_READ_WRITE, bytes_i);
+    m_queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/flip.cl");
@@ -305,9 +305,9 @@ void OpenCLImageProcessor::flipX(Image& image) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -326,15 +326,15 @@ void OpenCLImageProcessor::flipX(Image& image) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueReadBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -355,8 +355,8 @@ void OpenCLImageProcessor::flipY(Image& image) {
 
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_WRITE, bytes_i);
-    queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    cl::Buffer data_d(m_context, CL_MEM_READ_WRITE, bytes_i);
+    m_queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/flip.cl");
@@ -365,9 +365,9 @@ void OpenCLImageProcessor::flipY(Image& image) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -386,15 +386,15 @@ void OpenCLImageProcessor::flipY(Image& image) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueReadBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -422,11 +422,11 @@ void OpenCLImageProcessor::std_convolve_clamp_to_0(Image& image, const Mask::Bas
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_m = MASK_H * MASK_W * sizeof(double);
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY, bytes_i);
-    cl::Buffer result_d(context, CL_MEM_WRITE_ONLY, bytes_i);
-    cl::Buffer mask_d(context, CL_MEM_READ_ONLY, bytes_m);
-    queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
-    queue.enqueueWriteBuffer(mask_d, CL_TRUE, 0, bytes_m, ker);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY, bytes_i);
+    cl::Buffer result_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+    cl::Buffer mask_d(m_context, CL_MEM_READ_ONLY, bytes_m);
+    m_queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueWriteBuffer(mask_d, CL_TRUE, 0, bytes_m, ker);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/convolution.cl");
@@ -435,9 +435,9 @@ void OpenCLImageProcessor::std_convolve_clamp_to_0(Image& image, const Mask::Bas
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -462,15 +462,15 @@ void OpenCLImageProcessor::std_convolve_clamp_to_0(Image& image, const Mask::Bas
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadBuffer(result_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueReadBuffer(result_d, CL_TRUE, 0, bytes_i, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -498,11 +498,11 @@ void OpenCLImageProcessor::std_convolve_clamp_to_border(Image& image, const Mask
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_m = MASK_H * MASK_W * sizeof(double);
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY, bytes_i);
-    cl::Buffer result_d(context, CL_MEM_WRITE_ONLY, bytes_i);
-    cl::Buffer mask_d(context, CL_MEM_READ_ONLY, bytes_m);
-    queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
-    queue.enqueueWriteBuffer(mask_d, CL_TRUE, 0, bytes_m, ker);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY, bytes_i);
+    cl::Buffer result_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+    cl::Buffer mask_d(m_context, CL_MEM_READ_ONLY, bytes_m);
+    m_queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueWriteBuffer(mask_d, CL_TRUE, 0, bytes_m, ker);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/convolution.cl");
@@ -511,9 +511,9 @@ void OpenCLImageProcessor::std_convolve_clamp_to_border(Image& image, const Mask
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -538,15 +538,15 @@ void OpenCLImageProcessor::std_convolve_clamp_to_border(Image& image, const Mask
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadBuffer(result_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueReadBuffer(result_d, CL_TRUE, 0, bytes_i, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -578,8 +578,8 @@ void OpenCLImageProcessor::std_convolve_clamp_to_cyclic(Image& image, const Mask
     // We will be using OpenCL's image format
     cl_int ret;
     cl::ImageFormat imageFormat(CL_RGBA, CL_UNSIGNED_INT8);
-    cl::Image2D inputImage_d(context, CL_MEM_READ_ONLY, imageFormat, (size_t)image.w, (size_t)image.h, 0, nullptr, &ret);
-    cl::Image2D output_d(context, CL_MEM_WRITE_ONLY, imageFormat, (size_t)image.w, (size_t)image.h, 0, nullptr, &ret);
+    cl::Image2D inputImage_d(m_context, CL_MEM_READ_ONLY, imageFormat, (size_t)image.w, (size_t)image.h, 0, nullptr, &ret);
+    cl::Image2D output_d(m_context, CL_MEM_WRITE_ONLY, imageFormat, (size_t)image.w, (size_t)image.h, 0, nullptr, &ret);
     if (ret != CL_SUCCESS) {
         std::cerr << "clCreateImage2D error: " << ret << "\n";
         return;
@@ -589,7 +589,7 @@ void OpenCLImageProcessor::std_convolve_clamp_to_cyclic(Image& image, const Mask
     std::array<size_t, 3> region = {(size_t)image.w, (size_t)image.h, 1};
 
 
-    ret = queue.enqueueWriteImage(inputImage_d, CL_TRUE, origin, region, 0, 0, image.data);
+    ret = m_queue.enqueueWriteImage(inputImage_d, CL_TRUE, origin, region, 0, 0, image.data);
     if (ret != CL_SUCCESS) {
         std::cerr << "WriteImage error: " << getErrorString(ret) << "\n";
         return;
@@ -609,7 +609,7 @@ void OpenCLImageProcessor::std_convolve_clamp_to_cyclic(Image& image, const Mask
 
     // Create a sampler with specified properties using the C API
     cl_sampler samplerC = clCreateSamplerWithProperties(
-        context(),
+        m_context(),
         sampler_properties,
         &ret
     );
@@ -636,8 +636,8 @@ void OpenCLImageProcessor::std_convolve_clamp_to_cyclic(Image& image, const Mask
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_m = MASK_DIM * MASK_DIM * sizeof(double);
-    cl::Buffer mask_d(context, CL_MEM_READ_ONLY, bytes_m);
-    queue.enqueueWriteBuffer(mask_d, CL_TRUE, 0, bytes_m, ker);
+    cl::Buffer mask_d(m_context, CL_MEM_READ_ONLY, bytes_m);
+    m_queue.enqueueWriteBuffer(mask_d, CL_TRUE, 0, bytes_m, ker);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/convolution.cl");
@@ -646,9 +646,9 @@ void OpenCLImageProcessor::std_convolve_clamp_to_cyclic(Image& image, const Mask
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -669,19 +669,19 @@ void OpenCLImageProcessor::std_convolve_clamp_to_cyclic(Image& image, const Mask
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    ret = queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    ret = m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
     if (ret != CL_SUCCESS) {
         std::cerr << "Failed to enqueue kernel: " << ret << "\n";
         return;
     }
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadImage(output_d, CL_TRUE, origin, region, 0, 0, image.data);
+    m_queue.enqueueReadImage(output_d, CL_TRUE, origin, region, 0, 0, image.data);
 
 #ifdef PROFILE
     // Get profiling information
@@ -704,8 +704,8 @@ void OpenCLImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
     cl_int ret;
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_o = nw * nh * image.channels * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
-    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_o);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(m_context, CL_MEM_WRITE_ONLY, bytes_o);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/resize.cl"); 
@@ -713,9 +713,9 @@ void OpenCLImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -741,12 +741,12 @@ void OpenCLImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
     image.size = nw * nh * image.channels;
@@ -756,7 +756,7 @@ void OpenCLImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
 	delete[] image.data;
 	image.data = newImage;
 	newImage = nullptr;
-    ret = queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_o, image.data);
+    ret = m_queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_o, image.data);
     if (ret != CL_SUCCESS) {
         std::cerr << "Failed to read out buffer: " << ret << "\n";
         return;
@@ -782,8 +782,8 @@ void OpenCLImageProcessor::resizeBicubic(Image& image, int nw, int nh) {
     cl_int ret;
     size_t bytes_i = image.size * sizeof(uint8_t);
     size_t bytes_o = nw * nh * image.channels * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
-    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_o);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(m_context, CL_MEM_WRITE_ONLY, bytes_o);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/resize.cl"); 
@@ -791,9 +791,9 @@ void OpenCLImageProcessor::resizeBicubic(Image& image, int nw, int nh) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -819,12 +819,12 @@ void OpenCLImageProcessor::resizeBicubic(Image& image, int nw, int nh) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
     image.size = nw * nh * image.channels;
@@ -834,7 +834,7 @@ void OpenCLImageProcessor::resizeBicubic(Image& image, int nw, int nh) {
 	delete[] image.data;
 	image.data = newImage;
 	newImage = nullptr;
-    ret = queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_o, image.data);
+    ret = m_queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_o, image.data);
     if (ret != CL_SUCCESS) {
         std::cerr << "Failed to read out buffer: " << ret << "\n";
         return;
@@ -863,8 +863,8 @@ void OpenCLImageProcessor::local_binary_pattern(Image& image) {
 
     // Prepare memory
     size_t bytes_i = image.size * sizeof(uint8_t);
-    cl::Buffer data_d(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
-    cl::Buffer output_d(context, CL_MEM_WRITE_ONLY, bytes_i);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, image.data);
+    cl::Buffer output_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/lbp.cl");
@@ -873,9 +873,9 @@ void OpenCLImageProcessor::local_binary_pattern(Image& image) {
     sources.push_back({ kernel_code.c_str(),kernel_code.length() });
 
     // Compile program
-    cl::Program program(context, sources);
-    if (program.build({ device }) != CL_SUCCESS) {
-        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
         exit(1);
     }
 
@@ -893,15 +893,15 @@ void OpenCLImageProcessor::local_binary_pattern(Image& image) {
 #ifdef PROFILE
     // For Profiling
     cl::Event event;
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
 #else
-    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
 #endif
 
-    queue.finish();
+    m_queue.finish();
 
     // Read back the results
-    queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_i, image.data);
+    m_queue.enqueueReadBuffer(output_d, CL_TRUE, 0, bytes_i, image.data);
 
 #ifdef PROFILE
     // Get profiling information

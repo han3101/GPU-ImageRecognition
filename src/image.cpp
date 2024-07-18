@@ -91,7 +91,7 @@ ImageType Image::get_file_type(const char* filename) {
 
 Image& Image::grayscale_avg_cpu() {
 	if(channels < 3) {
-		printf("Image %p has less than 3 channels, it is assumed to already be grayscale.", this);
+		printf("Image %p has less than 3 channels, it is assumed to already be grayscale. \n", this);
 	}
 	else {
 		uint8_t* newData = new uint8_t[w*h];
@@ -115,7 +115,7 @@ Image& Image::grayscale_avg_cpu() {
 Image& Image::grayscale_cpu() {
 
 	if(channels < 3) {
-		printf("Image %p has less than 3 channels, it is assumed to already be grayscale.", this);
+		printf("Image %p has less than 3 channels, it is assumed to already be grayscale. \n", this);
 	}
 	else {
 		uint8_t* newData = new uint8_t[w*h];
@@ -141,7 +141,7 @@ Image& Image::grayscale_cpu() {
 Image& Image::grayscale_lum_cpu() {
 
 	if(channels < 3) {
-		printf("Image %p has less than 3 channels, it is assumed to already be grayscale.", this);
+		printf("Image %p has less than 3 channels, it is assumed to already be grayscale. \n", this);
 	}
 	else {
 		uint8_t* newData = new uint8_t[w*h];
@@ -381,7 +381,6 @@ Image& Image::resizeBilinear_cpu(uint16_t nw, uint16_t nh) {
             if (ix1 >= w) ix1 = ix;
             if (iy1 >= h) iy1 = iy;
 			
-			std::cout<<"low_x: "<<ix<<" high_x: "<<ix1<<"\n";
 
             for (int c = 0; c < channels; ++c) {
                 float value = (1 - fx1) * (1 - fy1) * data[(ix + iy * w) * channels + c] +
@@ -471,7 +470,7 @@ void Image::integralImage_cpu(std::unique_ptr<u_int32_t[]>& integralImage, std::
 				// Use rotated summed area table (RSAT) formula instead
 				integralImageTilt[index] = data[index] 
 								+ (i > 0 && j > 0? integralImageTilt[index - w - 1]: 0)
-								+ (i > 0 && j < index - 1? integralImageTilt[index - w + 1]: 0)
+								+ (i > 0 && j < w-1? integralImageTilt[index - w + 1]: 0)
 								- (i > 1? integralImageTilt[index - 2*w]: 0)
 								+ (i > 0? data[index - w]: 0);
 								
