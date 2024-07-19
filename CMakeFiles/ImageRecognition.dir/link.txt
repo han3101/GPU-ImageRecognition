@@ -1,1 +1,0 @@
-/usr/bin/g++ -g CMakeFiles/ImageRecognition.dir/src/main.cpp.o CMakeFiles/ImageRecognition.dir/src/image.cpp.o CMakeFiles/ImageRecognition.dir/src/opencl_image.cpp.o CMakeFiles/ImageRecognition.dir/src/viola_jones.cpp.o -o ImageRecognition  /usr/lib/x86_64-linux-gnu/libOpenCL.so /usr/lib/gcc/x86_64-linux-gnu/9/libgomp.so /usr/lib/x86_64-linux-gnu/libpthread.so
