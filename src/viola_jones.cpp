@@ -6,16 +6,15 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
 
     int total = 0;
     std::vector<Rect> rects;
-    std::unique_ptr<u_int32_t[]> integralImage(new uint32_t[image.w * image.h]);
-    std::unique_ptr<u_int32_t[]> integralImageSquare(new uint32_t[image.w * image.h]);
-    std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
-    std::unique_ptr<uint32_t[]> integralImageTilt(new uint32_t[image.w * image.h]);
 
     if (m_edgeDensity > 0) {
-        integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
+        image.integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
     }
 
-    image.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
+    if (image.integralImage == nullptr) {
+        image.integralImage_cpu();
+    }
+
     
     _Float64 minWidth = haar[0];
     _Float64 minHeight = haar[1];
@@ -30,12 +29,12 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
             for (int j=0; j<(image.w-blockWidth); j++) {
 
                 // if (m_edgeDensity > 0) {
-                //     if (this->edgeExclude(m_edgeDensity, integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
+                //     if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
                 //         continue;
                 //     }
                 // }
                 
-                if (this->evalStages(haar, integralImage, integralImageSquare, integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale)) {
+                if (this->evalStages(haar, image.integralImage, image.integralImageSquare, image.integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale)) {
                     total++;
                     rects.emplace_back(Rect{
                         0,

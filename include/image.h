@@ -22,7 +22,9 @@ enum ImageType {
 };
 
 
-struct Image {
+class Image {
+
+public:
 	uint8_t* data = NULL;
 	size_t size = 0;
 	int w;
@@ -30,10 +32,10 @@ struct Image {
 	int channels;
 
 	// For obj detection
-	// std::unique_ptr<u_int32_t[]> integralImage = nullptr;
-	// std::unique_ptr<u_int32_t[]> integralImageSquare = nullptr;
-	// std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
-	// std::unique_ptr<uint32_t[]> integralImageTilt = nullptr;
+	std::unique_ptr<uint32_t[]> integralImage = nullptr;
+	std::unique_ptr<uint32_t[]> integralImageSquare = nullptr;
+	std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
+	std::unique_ptr<uint32_t[]> integralImageTilt = nullptr;
 
 	Image(const char* filename, int channel_force = 0);
 	Image(int w, int h, int channels = 3);
@@ -91,5 +93,14 @@ public:
 	Image& local_binary_pattern_cpu();
 
 	void integralImage_cpu(std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSobel, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt);
+
+	void integralImage_cpu() {
+		if (integralImage == nullptr) {
+			integralImage = std::make_unique<uint32_t[]>(w * h);
+			integralImageSquare = std::make_unique<uint32_t[]>(w * h);
+			integralImageTilt = std::make_unique<uint32_t[]>(w * h);
+		}
+		this->integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
+	}
 
 };
