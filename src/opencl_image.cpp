@@ -45,7 +45,7 @@ void OpenCLImageProcessor::init() {
 
     m_device = all_devices[0];
 #ifdef PROFILE
-    std::cout << "Using device: " << device.getInfo<CL_DEVICE_NAME>() << "\n";
+    std::cout << "Using device: " << m_device.getInfo<CL_DEVICE_NAME>() << "\n";
 #endif
 
     size_t max_work_group_size = m_device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();

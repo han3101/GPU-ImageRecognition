@@ -1,0 +1,1 @@
+/usr/bin/g++ -g CMakeFiles/ImageRecognition_test.dir/src/test.cc.o CMakeFiles/ImageRecognition_test.dir/src/image.cpp.o CMakeFiles/ImageRecognition_test.dir/src/opencl_image.cpp.o -o ImageRecognition_test  /usr/lib/x86_64-linux-gnu/libOpenCL.so lib/libgtest_main.a /usr/lib/gcc/x86_64-linux-gnu/9/libgomp.so /usr/lib/x86_64-linux-gnu/libpthread.so lib/libgtest.a -lpthread

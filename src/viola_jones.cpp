@@ -6,10 +6,10 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
 
     int total = 0;
     std::vector<Rect> rects;
-    std::unique_ptr<u_int32_t[]> integralImage(new uint32_t[image.size]);
-    std::unique_ptr<u_int32_t[]> integralImageSquare(new uint32_t[image.size]);
+    std::unique_ptr<u_int32_t[]> integralImage(new uint32_t[image.w * image.h]);
+    std::unique_ptr<u_int32_t[]> integralImageSquare(new uint32_t[image.w * image.h]);
     std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
-    std::unique_ptr<uint32_t[]> integralImageTilt = nullptr;
+    std::unique_ptr<uint32_t[]> integralImageTilt(new uint32_t[image.w * image.h]);
 
     image.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
 
@@ -26,24 +26,23 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
             for (int j=0; j<(image.w-blockWidth); j++) {
                 
                 if (this->evalStages(haar, integralImage, integralImageSquare, integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale)) {
-                    rects[total++] = {
+                    total++;
+                    rects.emplace_back(Rect{
                         0,
                         blockWidth,
                         blockHeight,
                         j,
                         i
-                    };
+                    });
                 }
             }
 
-            std::cout<<"blockWidth: "<<blockWidth<<"\n";
+   
         }
         scale *= m_scaleFactor;
         blockWidth = static_cast<int>(scale * minWidth);
         blockHeight = static_cast<int>(scale * minHeight);
     }
-
-    std::cout<<"before merge"<<"\n";
     
     return this->merge_rectangles(image, rects);
 }
@@ -52,6 +51,7 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
 std::vector<Rect> ViolaJones::merge_rectangles(Image& image, std::vector<Rect> rects) {
 
     int num_recs = rects.size();
+    std::cout<<"num rectangles "<<num_recs<<"\n";
     DisjointSet disjointset(num_recs);
 
     for (int i=0; i<num_recs; i++) {
@@ -121,7 +121,7 @@ bool ViolaJones::intersect_rect(Rect rect1, Rect rect2) {
 bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, int scale) {
 
     float inverseArea = 1.0 / (blockWidth * blockHeight);
-    int wba = i * width * j;
+    int wba = i * width + j;
     int wbb = wba + blockWidth;
     int wbd = wba + blockHeight * width;
     int wbc = wbd + blockWidth;
@@ -136,15 +136,13 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
 
     int length = haar.size();
 
-    // std::cout<<"hi"<<"\n";
-
     for (int w = 2; w < length;) {
-        auto stageSum = 0;
+        float stageSum = 0;
         auto stageThreshold = haar[w++];
         auto nodeLength = haar[w++];
 
         while (nodeLength--) {
-            auto rectsSum = 0;
+            float rectsSum = 0.0;
             auto tilted = haar[w++];
             auto rectsLength = haar[w++];
 
@@ -153,8 +151,8 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
                 int rectTop = static_cast<int>(i + haar[w++] * scale + 0.5); 
                 int rectWidth = static_cast<int>(haar[w++] * scale + 0.5);
                 int rectHeight = static_cast<int>(haar[w++] * scale + 0.5);
-                auto rectWeight = haar[w++];
 
+                auto rectWeight = haar[w++];
                 int w1, w2, w3, w4;
 
                 if (tilted) {
@@ -164,7 +162,9 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
                     w3 = (rectLeft - rectHeight) + (rectTop + rectHeight - 1) * width;
                     w4 = (rectLeft + rectWidth) + (rectTop + rectWidth - 1) * width;
                     rectsSum += (integralImageTilt[w1] + integralImageTilt[w2] - integralImageTilt[w3] - integralImageTilt[w4]) * rectWeight;
+                    std::cout<<"tilt"<<"\n";
                 } else {
+                    // Sum area table
                     w1 = rectTop * width + rectLeft;
                     w2 = w1 + rectWidth;
                     w3 = w1 + rectHeight * width;
@@ -172,14 +172,11 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
                     rectsSum += (integralImage[w1] - integralImage[w2] - integralImage[w3] + integralImage[w4]) * rectWeight;
                 }
 
-                // std::cout<<r<<"\n";
             }
 
             auto nodeThreshold = haar[w++];
             auto nodeLeft = haar[w++];
             auto nodeRight = haar[w++];
-
-            // std::cout<<"here?"<<"\n";
 
             if (rectsSum * inverseArea < nodeThreshold * standardDeviation) {
                 stageSum += nodeLeft;
@@ -200,16 +197,43 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
 void ViolaJones::draw(Image& image, std::vector<Rect> faces) {
 
     for (const Rect& face: faces) {
-        for (int i = face.y; i < face.y + face.height; i++) {
-            for (int j = face.x; j < face.x + face.width; j++) {
-                int index = (i * image.w + j) * image.channels;
+        // Draw top and bottom borders
+        for (int j = face.x; j < face.x + face.width; j++) {
+            int topIndex = (face.y * image.w + j) * image.channels;
+            int bottomIndex = ((face.y + face.height - 1) * image.w + j) * image.channels;
 
-                if (index + image.channels-1 < image.size) {
-                    image.data[index] = 255;
-                    if (image.channels > 1) image.data[index + 1] = 0;
-                    if (image.channels > 2) image.data[index + 2] = 0;
-                    if (image.channels > 3) image.data[index + 3] = 255;
-                }
+            if (topIndex + image.channels - 1 < image.size) {
+                image.data[topIndex] = 255;
+                if (image.channels > 1) image.data[topIndex + 1] = 0;
+                if (image.channels > 2) image.data[topIndex + 2] = 0;
+                if (image.channels > 3) image.data[topIndex + 3] = 255;
+            }
+
+            if (bottomIndex + image.channels - 1 < image.size) {
+                image.data[bottomIndex] = 255;
+                if (image.channels > 1) image.data[bottomIndex + 1] = 0;
+                if (image.channels > 2) image.data[bottomIndex + 2] = 0;
+                if (image.channels > 3) image.data[bottomIndex + 3] = 255;
+            }
+        }
+
+        // Draw left and right borders
+        for (int i = face.y; i < face.y + face.height; i++) {
+            int leftIndex = (i * image.w + face.x) * image.channels;
+            int rightIndex = (i * image.w + face.x + face.width - 1) * image.channels;
+
+            if (leftIndex + image.channels - 1 < image.size) {
+                image.data[leftIndex] = 255;
+                if (image.channels > 1) image.data[leftIndex + 1] = 0;
+                if (image.channels > 2) image.data[leftIndex + 2] = 0;
+                if (image.channels > 3) image.data[leftIndex + 3] = 255;
+            }
+
+            if (rightIndex + image.channels - 1 < image.size) {
+                image.data[rightIndex] = 255;
+                if (image.channels > 1) image.data[rightIndex + 1] = 0;
+                if (image.channels > 2) image.data[rightIndex + 2] = 0;
+                if (image.channels > 3) image.data[rightIndex + 3] = 255;
             }
         }
     }

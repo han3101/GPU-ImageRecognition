@@ -6,9 +6,9 @@ class DisjointSet {
 public:
     
     DisjointSet(int length) {
-        if (length == 0) {
-            throw std::invalid_argument("DisjointSet length not specified.");
-        }
+        // if (!length) {
+        //     throw std::invalid_argument("DisjointSet length not specified.");
+        // }
         this->m_length = length;
         m_parent.resize(length);
         for (int i = 0; i < length; ++i) {

@@ -23,8 +23,11 @@ public:
     std::vector<Rect> detect(Image& image, std::vector<_Float64> haar);
 
     void draw(Image& image, std::vector<Rect> faces);
-    
     bool intersect_rect(Rect rect1, Rect rect2);
+
+    void set_edgeDensity(float n) {m_edgeDensity = n;}
+    void set_scaleFactor(float n) {m_scaleFactor = n;}
+    void set_stepSize(float n) {m_stepSize = n;}
 
 private:
     float m_regions_overlap = 0.5;
