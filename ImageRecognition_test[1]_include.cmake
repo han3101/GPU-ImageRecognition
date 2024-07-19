@@ -1,5 +1,0 @@
-if(EXISTS "/home/azureuser/image_recognition/ImageRecognition_test[1]_tests.cmake")
-  include("/home/azureuser/image_recognition/ImageRecognition_test[1]_tests.cmake")
-else()
-  add_test(ImageRecognition_test_NOT_BUILT ImageRecognition_test_NOT_BUILT)
-endif()
