@@ -29,11 +29,11 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
         for (int i=0; i<(image.h-blockHeight); i++) {
             for (int j=0; j<(image.w-blockWidth); j++) {
 
-                if (m_edgeDensity > 0) {
-                    if (this->edgeExclude(m_edgeDensity, integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
-                        continue;
-                    }
-                }
+                // if (m_edgeDensity > 0) {
+                //     if (this->edgeExclude(m_edgeDensity, integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
+                //         continue;
+                //     }
+                // }
                 
                 if (this->evalStages(haar, integralImage, integralImageSquare, integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale)) {
                     total++;
@@ -172,7 +172,7 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
                     w3 = (rectLeft - rectHeight) + (rectTop + rectHeight - 1) * width;
                     w4 = (rectLeft + rectWidth) + (rectTop + rectWidth - 1) * width;
                     rectsSum += (integralImageTilt[w1] + integralImageTilt[w2] - integralImageTilt[w3] - integralImageTilt[w4]) * rectWeight;
-                    std::cout<<"tilt"<<"\n";
+                    // std::cout<<"tilt"<<"\n";
                 } else {
                     // Sum area table
                     w1 = rectTop * width + rectLeft;

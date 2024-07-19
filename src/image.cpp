@@ -437,6 +437,7 @@ void Image::integralImage_cpu(std::unique_ptr<u_int32_t[]>& integralImage, std::
 
 		sobel.std_convolve_clamp_to_0_cpu(0, &sobelX);
 		sobel.std_convolve_clamp_to_0_cpu(0, &sobelY);
+
 	}
 	
 	

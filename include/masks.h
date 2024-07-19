@@ -402,6 +402,100 @@ namespace Mask {
         }
     };
 
+    // INCOMPLETE DO NOT USE
+    class EdgeSobelX1D : public BaseMask {
+    private:
+        static constexpr int width = 3;
+        static constexpr int height = 1;
+        static constexpr int cr = 0;
+        static constexpr int cc = 1;
+        static constexpr double filter_factor = 1.0;
+        std::array<double, 3> mask;
+
+    public:
+
+        EdgeSobelX1D() {
+            double filter[3] = {
+                -1.0f, 0.0f, 1.0f
+            };
+
+            for (int i = 0; i < width*height; ++i) {
+                mask[i] = filter[i] / filter_factor;
+            }
+        }
+
+        int getWidth() const override {
+            return width;
+        }
+
+        int getHeight() const override {
+            return height;
+        }
+
+        int getCenterRow() const override {
+            return cr;
+        }
+
+        int getCenterColumn() const override {
+            return cc;
+        }
+
+        double getFilterFactor() const override {
+            return filter_factor;
+        }
+
+        const double* getData() const override {
+            return mask.data();
+        }
+    };
+
+    // INCOMPLETE DO NOT USE
+    class EdgeSobelY1D : public BaseMask {
+    private:
+        static constexpr int width = 1;
+        static constexpr int height = 3;
+        static constexpr int cr = 1;
+        static constexpr int cc = 0;
+        static constexpr double filter_factor = 4.0;
+        std::array<double, 3> mask;
+
+    public:
+
+        EdgeSobelY1D() {
+            double filter[3] = {
+                1.0f, 2.0f, 1.0f,
+            };
+
+            for (int i = 0; i < width*height; ++i) {
+                mask[i] = filter[i] / filter_factor;
+            }
+        }
+
+        int getWidth() const override {
+            return width;
+        }
+
+        int getHeight() const override {
+            return height;
+        }
+
+        int getCenterRow() const override {
+            return cr;
+        }
+
+        int getCenterColumn() const override {
+            return cc;
+        }
+
+        double getFilterFactor() const override {
+            return filter_factor;
+        }
+
+        const double* getData() const override {
+            return mask.data();
+        }
+    };
+
     class BoxBlur : public BaseMask {
     private:
         static constexpr int width = 3;

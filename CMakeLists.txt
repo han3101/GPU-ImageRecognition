@@ -39,6 +39,7 @@ set(APPLICATION_HEADERS
     include/opencl_image.h
     include/masks.h
     include/viola_jones.h
+    include/haarCasscades.h
 )
 
 add_executable(${PROJECT_NAME} ${APPLICATION_SOURCE})
@@ -96,6 +97,7 @@ set(TEST_SOURCE
     src/test.cc
     src/image.cpp
     src/opencl_image.cpp
+    src/viola_jones.cpp
     
 )
 add_executable(${PROJECT_NAME}_test ${TEST_SOURCE})

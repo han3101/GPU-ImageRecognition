@@ -225,6 +225,12 @@ TEST(ImageTest, simpleIntegralcpu) {
         7, 8, 9
     };
 
+    std::vector<int> integratedPixels = {
+        1, 3, 6,
+        5, 12, 21,
+        12, 27, 45
+    };
+
     std::vector<int> rotated_pixels = {
         1, 2, 3,
         7, 11, 11,
@@ -254,6 +260,7 @@ TEST(ImageTest, simpleIntegralcpu) {
     for (int i = 0; i < 9; ++i) {
         // std::cout<<i * 3 + j<<i<<j<<"\n";
         EXPECT_EQ(integralImageTilt[i], rotated_pixels[i]);
+        EXPECT_EQ(integralImage[i], integratedPixels[i]);
         
     }
 

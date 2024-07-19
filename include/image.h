@@ -29,6 +29,12 @@ struct Image {
 	int h;
 	int channels;
 
+	// For obj detection
+	// std::unique_ptr<u_int32_t[]> integralImage = nullptr;
+	// std::unique_ptr<u_int32_t[]> integralImageSquare = nullptr;
+	// std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
+	// std::unique_ptr<uint32_t[]> integralImageTilt = nullptr;
+
 	Image(const char* filename, int channel_force = 0);
 	Image(int w, int h, int channels = 3);
 	Image(const Image& img);
@@ -37,6 +43,7 @@ struct Image {
 	bool write(const char* filename);
 
 private:
+
 	bool read(const char* filename, int channel_force = 0);
 
 	void mask_calc(double* mask, double filter_factor, int w, int h) {
