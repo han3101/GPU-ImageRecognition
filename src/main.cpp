@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
     // Image cat("imgs/cat.jpeg");
-    Image tkl("imgs/tkl.jpg");
+    Image tkl("imgs/facetest.jpg");
 
     // Image gpu_test = testHD;
 
@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     // Mask::GaussianDynamic1D gaussianBlur2(1, true);
 
     // Timing the computation
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     // cat.grayscale_avg_lum();
     // cat.local_binary_pattern_cpu();
@@ -37,33 +37,33 @@ int main(int argc, char** argv) {
     // cat.std_convolve_clamp_to_0_cpu(1, &sobelY);
     // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
-    // ViolaJones faceTrack;
-    // faceTrack.set_stepSize(1.7);
+    ViolaJones faceTrack;
+    faceTrack.set_stepSize(1.7);
 
-    // Image colortkl = tkl;
-    // std::vector<Rect> faces = faceTrack.detect(tkl, faceTrack.haar_test);
+    Image colortkl = tkl;
+    std::vector<Rect> faces = faceTrack.detect(tkl, faceTrack.haar_test);
     
-    // std::cout<<"Before draw"<<"\n";
-    // faceTrack.draw(colortkl, faces);
+    std::cout<<"Before draw"<<"\n";
+    faceTrack.draw(colortkl, faces);
 
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    // colortkl.write("output/lbp.jpeg");
+    colortkl.write("output/lbp.jpeg");
 
 
-    OpenCLImageProcessor processor;
-    processor.std_convolve_clamp_to_0(tkl, &sobelX);
-    processor.std_convolve_clamp_to_0(tkl, &sobelY);
-    // processor.diffmap(gpu_cat, test);
-    // processor.resizeBicubic(gpu_test, gpu_test.w, gpu_test.h * 1.5);
-    // processor.diffmap(gpu_test, testHD);
+    // OpenCLImageProcessor processor;
+    // processor.std_convolve_clamp_to_0(tkl, &sobelX);
+    // processor.std_convolve_clamp_to_0(tkl, &sobelY);
+    // // processor.diffmap(gpu_cat, test);
+    // // processor.resizeBicubic(gpu_test, gpu_test.w, gpu_test.h * 1.5);
+    // // processor.diffmap(gpu_test, testHD);
 
-    // processor.diffmap(gpu_test, gpu_test);
-    // processor.local_binary_pattern(cat);
-    tkl.write("output/diff.jpeg");
+    // // processor.diffmap(gpu_test, gpu_test);
+    // // processor.local_binary_pattern(cat);
+    // tkl.write("output/diff.jpeg");
 
 	return 0;
 }

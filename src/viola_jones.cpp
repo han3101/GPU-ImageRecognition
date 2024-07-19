@@ -11,8 +11,12 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
     std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
     std::unique_ptr<uint32_t[]> integralImageTilt(new uint32_t[image.w * image.h]);
 
-    image.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
+    if (m_edgeDensity > 0) {
+        integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
+    }
 
+    image.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
+    
     _Float64 minWidth = haar[0];
     _Float64 minHeight = haar[1];
     float scale = m_initialScale * m_scaleFactor;
@@ -24,6 +28,12 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
         
         for (int i=0; i<(image.h-blockHeight); i++) {
             for (int j=0; j<(image.w-blockWidth); j++) {
+
+                if (m_edgeDensity > 0) {
+                    if (this->edgeExclude(m_edgeDensity, integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
+                        continue;
+                    }
+                }
                 
                 if (this->evalStages(haar, integralImage, integralImageSquare, integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale)) {
                     total++;
@@ -237,4 +247,18 @@ void ViolaJones::draw(Image& image, std::vector<Rect> faces) {
             }
         }
     }
+}
+
+bool ViolaJones::edgeExclude(float edgeDensity, std::unique_ptr<u_int32_t[]>& integralImageSobel, int i, int j, int width, int blockWidth, int blockHeight) {
+    int wba = i * width + j;
+    int wbb = wba + blockWidth;
+    int wbd = wba + blockHeight * width;
+    int wbc = wbd + blockWidth;
+    
+    float blockEdgeDensity = (float) (integralImageSobel[wba] - integralImageSobel[wbb] - integralImageSobel[wbd] + integralImageSobel[wbc]) / (blockWidth * blockHeight * 255);
+
+    if (blockEdgeDensity < edgeDensity) return true;
+    // std::cout<<blockEdgeDensity<<"\n";
+
+    return false;
 }
