@@ -917,3 +917,75 @@ void OpenCLImageProcessor::local_binary_pattern(Image& image) {
 #endif
 
 }
+
+void OpenCLImageProcessor::evalStages(Image& image, std::vector<double> haar, std::vector<int> results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int blockWidth, int blockHeight, float scale, float inverseArea) {
+
+    // Prepare memory
+    size_t bytes_h = haar.size() * sizeof(double);
+    size_t bytes_i = (image.w * image.h) * sizeof(uint32_t);
+    size_t bytes_r = ((image.h-blockHeight) * (image.w-blockWidth) * sizeof(int));
+    cl::Buffer haar_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_h, haar.data());
+    cl::Buffer integralImage_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImage.get());
+    cl::Buffer integralImageSquare_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImageSquare.get());
+    cl::Buffer integralImageTilt_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImageTilt.get());
+    cl::Buffer result_d(m_context, CL_MEM_WRITE_ONLY, bytes_r);
+
+    // Load Kernel
+    std::string kernel_code = loadKernelSource("include/kernels/viola_jones.cl");
+    //Appending the kernel, which is presented here as a string. 
+    cl::Program::Sources sources;
+    sources.push_back({ kernel_code.c_str(),kernel_code.length() });
+
+    // Compile program
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
+        exit(1);
+    }
+
+    // Load in kernel args
+    cl::Kernel kernel(program, "evalStages");
+    kernel.setArg(0, haar_d);
+    kernel.setArg(1, result_d);
+    kernel.setArg(2, integralImage_d);
+    kernel.setArg(3, integralImageSquare_d);
+    kernel.setArg(4, integralImageTilt_d);
+    kernel.setArg(5, (int) haar.size());
+    kernel.setArg(6, image.w);
+    kernel.setArg(7, image.h);
+    kernel.setArg(8, blockWidth);
+    kernel.setArg(9, blockHeight);
+    kernel.setArg(10, scale);
+    kernel.setArg(11, inverseArea);
+
+    // Set dimensions
+    cl::NDRange global(image.w-blockWidth, image.h-blockHeight);
+    
+
+#ifdef PROFILE
+    // For Profiling
+    cl::Event event;
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+#else
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+#endif
+
+    m_queue.finish();
+
+    // Read back the results
+    m_queue.enqueueReadBuffer(result_d, CL_TRUE, 0, bytes_r, results.data());
+
+#ifdef PROFILE
+    // Get profiling information
+    cl_ulong time_start;
+    cl_ulong time_end;
+    event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+    event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+
+    // Compute the elapsed time in nanoseconds
+    cl_ulong elapsed_time = time_end - time_start;
+
+    std::cout << "Kernel execution time: " << (double) elapsed_time / 1000000 << " ms" << std::endl;
+#endif
+
+}

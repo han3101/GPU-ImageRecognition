@@ -21,7 +21,8 @@ public:
     ViolaJones() {};
     ~ViolaJones() {};
 
-    std::vector<Rect> detect(Image& image, std::vector<_Float64> haar);
+    std::vector<Rect> detect(Image& image, std::vector<double> haar);
+    std::vector<Rect> detect(Image& image, std::vector<double> haar, OpenCLImageProcessor& opencl);
 
     void draw(Image& image, std::vector<Rect> faces);
     bool intersect_rect(Rect rect1, Rect rect2);
@@ -31,16 +32,16 @@ public:
     void set_stepSize(float n) {m_stepSize = n;}
 
 private:
-    float m_regions_overlap = 0.5;
+    float m_regions_overlap = 0.3;
 
     // Detection window variables
-    float m_edgeDensity = 0.03;
+    float m_edgeDensity = 0.025;
     float m_initialScale = 1.0;
     float m_scaleFactor = 1.25;
     float m_stepSize = 1.5;
 
     std::vector<Rect> merge_rectangles(Image& image, std::vector<Rect> rects);
-    bool evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, int scale);
+    bool evalStages(std::vector<double> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, float scale);
 
     bool edgeExclude(float edgeDensity, std::unique_ptr<u_int32_t[]>& integralImageSobel, int i, int j, int width, int blockWidth, int blockHeight);
 

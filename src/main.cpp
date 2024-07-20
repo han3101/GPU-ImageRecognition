@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
     // Image cat("imgs/cat.jpeg");
-    Image tkl("imgs/hotd.jpeg");
+    Image tkl("imgs/tkl.jpg");
 
     // Image gpu_test = testHD;
 
@@ -38,11 +38,13 @@ int main(int argc, char** argv) {
     // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
     ViolaJones faceTrack;
+    OpenCLImageProcessor processor;
     HaarCasscades haar;
-    faceTrack.set_stepSize(1.7);
+    faceTrack.set_stepSize(1.5);
 
     Image colortkl = tkl;
     std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
+    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
     
     std::cout<<"Before draw"<<"\n";
     faceTrack.draw(colortkl, faces);

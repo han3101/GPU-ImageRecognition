@@ -29,6 +29,7 @@ public:
     void std_convolve_clamp_to_cyclic(Image& image, const Mask::BaseMask* mask);
 
     void local_binary_pattern(Image& image);
+    void evalStages(Image& image, std::vector<double> haar, std::vector<int> results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int blockWidth, int blockHeight, float scale, float inverseArea);
 
 private:
     cl::Context m_context;

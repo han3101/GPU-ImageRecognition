@@ -2,7 +2,7 @@
 #include "disjointset.h"
 
 
-std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
+std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
 
     int total = 0;
     std::vector<Rect> rects;
@@ -16,8 +16,8 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
     }
 
     
-    _Float64 minWidth = haar[0];
-    _Float64 minHeight = haar[1];
+    double minWidth = haar[0];
+    double minHeight = haar[1];
     float scale = m_initialScale * m_scaleFactor;
     int blockWidth = static_cast<int>(scale * minWidth);
     int blockHeight = static_cast<int>(scale * minHeight);
@@ -56,11 +56,69 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<_Float64> haar) {
     return this->merge_rectangles(image, rects);
 }
 
+std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, OpenCLImageProcessor& opencl) {
+
+    int total = 0;
+    std::vector<Rect> rects;
+
+    if (m_edgeDensity > 0) {
+        image.integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
+    }
+
+    if (image.integralImage == nullptr) {
+        image.integralImage_cpu();
+    }
+
+    
+    double minWidth = haar[0];
+    double minHeight = haar[1];
+    float scale = m_initialScale * m_scaleFactor;
+    int blockWidth = static_cast<int>(scale * minWidth);
+    int blockHeight = static_cast<int>(scale * minHeight);
+
+    while (blockWidth < image.w && blockHeight < image.h) {
+        int step = static_cast<int>(scale * m_stepSize);
+        float inverseArea = (float) 1.0 / (blockWidth * blockHeight);
+
+        std::vector<int> results((image.h-blockHeight) * (image.w-blockWidth));
+
+        opencl.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, blockWidth, blockHeight, scale, inverseArea); 
+        
+        for (int i=0; i<(image.h-blockHeight); i++) {
+            for (int j=0; j<(image.w-blockWidth); j++) {
+
+                // if (m_edgeDensity > 0) {
+                //     if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
+                //         continue;
+                //     }
+                // }
+
+                if (results[i * image.w + j] == 1) {
+                    total++;
+                    rects.emplace_back(Rect{
+                        0,
+                        blockWidth,
+                        blockHeight,
+                        j,
+                        i
+                    });
+                }
+
+            }
+        }
+                
+        scale *= m_scaleFactor;
+        blockWidth = static_cast<int>(scale * minWidth);
+        blockHeight = static_cast<int>(scale * minHeight);
+    }
+    
+    return this->merge_rectangles(image, rects);
+}
 
 std::vector<Rect> ViolaJones::merge_rectangles(Image& image, std::vector<Rect> rects) {
 
     int num_recs = rects.size();
-    std::cout<<"num rectangles "<<num_recs<<"\n";
+    std::cout<<"num rectangles before merge "<<num_recs<<"\n";
     DisjointSet disjointset(num_recs);
 
     for (int i=0; i<num_recs; i++) {
@@ -74,9 +132,10 @@ std::vector<Rect> ViolaJones::merge_rectangles(Image& image, std::vector<Rect> r
                 int x2 = std::max(r1.x + r1.width, r2.x + r2.width);
                 int y2 = std::max(r1.y + r1.height, r2.y + r2.height);
                 float overlap = (x1 - x2) * (y1 - y2);
-                int area1 = (r1.width * r1.height);
-                int area2 = (r2.width * r2.height);
+                float area1 = (r1.width * r1.height);
+                float area2 = (r2.width * r2.height);
 
+                // std::cout<<overlap / (area1 * (area1 / area2))<<"\n";
                 if ((overlap / (area1 * (area1 / area2)) >= this->m_regions_overlap)
                 && (overlap / (area2 * (area1 / area2)) >=  this->m_regions_overlap)) {
                     disjointset.unite(i, j);
@@ -105,13 +164,15 @@ std::vector<Rect> ViolaJones::merge_rectangles(Image& image, std::vector<Rect> r
         const Rect& rect = entry.second;
         Rect averagedRect = {
             rect.total,
-            static_cast<int>(rect.width / rect.total + 0.5),  
-            static_cast<int>(rect.height / rect.total + 0.5),
-            static_cast<int>(rect.x / rect.total + 0.5),
-            static_cast<int>(rect.y / rect.total + 0.5)
+            static_cast<int>((float) rect.width / rect.total + 0.5),  
+            static_cast<int>((float) rect.height / rect.total + 0.5),
+            static_cast<int>((float) rect.x / rect.total + 0.5),
+            static_cast<int>((float) rect.y / rect.total + 0.5)
         };
         result.push_back(averagedRect);
     }
+
+    std::cout<<"num rectangles after merge "<<result.size()<<"\n";
 
     return result;
 }
@@ -127,18 +188,18 @@ bool ViolaJones::intersect_rect(Rect rect1, Rect rect2) {
 }
 
 
-bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, int scale) {
+bool ViolaJones::evalStages(std::vector<double> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, float scale) {
 
-    float inverseArea = 1.0 / (blockWidth * blockHeight);
+    float inverseArea = (float) 1.0 / (blockWidth * blockHeight);
     int wba = i * width + j;
     int wbb = wba + blockWidth;
     int wbd = wba + blockHeight * width;
     int wbc = wbd + blockWidth;
 
-    _Float32 mean = (integralImage[wba] - integralImage[wbb] - integralImage[wbd] + integralImage[wbc]) * inverseArea;
-    _Float32 variance = (integralImageSquare[wba] - integralImageSquare[wbb] - integralImageSquare[wbd] + integralImageSquare[wbc]) * inverseArea - mean * mean;
+    float mean = (integralImage[wba] - integralImage[wbb] - integralImage[wbd] + integralImage[wbc]) * inverseArea;
+    float variance = (integralImageSquare[wba] - integralImageSquare[wbb] - integralImageSquare[wbd] + integralImageSquare[wbc]) * inverseArea - mean * mean;
 
-    _Float32 standardDeviation = 1;
+    float standardDeviation = 1;
     if (variance > 0) {
         standardDeviation = std::sqrt(variance);
     }
@@ -146,7 +207,7 @@ bool ViolaJones::evalStages(std::vector<_Float64> haar, std::unique_ptr<u_int32_
     int length = haar.size();
 
     for (int w = 2; w < length;) {
-        float stageSum = 0;
+        double stageSum = 0;
         auto stageThreshold = haar[w++];
         auto nodeLength = haar[w++];
 
