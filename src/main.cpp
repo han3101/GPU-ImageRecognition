@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
     // Image cat("imgs/cat.jpeg");
-    Image tkl("imgs/boston.jpeg");
+    Image tkl("imgs/hotd.jpeg");
 
     // Image gpu_test = testHD;
 
@@ -43,8 +43,8 @@ int main(int argc, char** argv) {
     faceTrack.set_stepSize(1.5);
 
     Image colortkl = tkl;
-    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
-    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
+    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
+    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
     
     std::cout<<"Before draw"<<"\n";
     faceTrack.draw(colortkl, faces);

@@ -24,7 +24,7 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
 
     while (blockWidth < image.w && blockHeight < image.h) {
         int step = static_cast<int>(scale * m_stepSize);
-        
+        float inverseArea = (float) 1.0 / (blockWidth * blockHeight);
         for (int i=0; i<(image.h-blockHeight); i+= step) {
             for (int j=0; j<(image.w-blockWidth); j+= step) {
 
@@ -34,7 +34,8 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
                 //     }
                 // }
                 
-                if (this->evalStages(haar, image.integralImage, image.integralImageSquare, image.integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale)) {
+                if (this->evalStages(haar, image.integralImage, image.integralImageSquare, image.integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale, inverseArea)) {
+                    // std::cout<<"Thread ("<<i<<", "<<j<<")\n";
                     total++;
                     rects.emplace_back(Rect{
                         0,
@@ -80,9 +81,15 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
         int step = static_cast<int>(scale * m_stepSize);
         float inverseArea = (float) 1.0 / (blockWidth * blockHeight);
 
-        std::vector<int> results((image.h-blockHeight) * (image.w-blockWidth));
+        std::vector<int> results((image.h) * (image.w));
 
-        opencl.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, blockWidth, blockHeight, scale, inverseArea); 
+        opencl.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, blockWidth, blockHeight, scale, inverseArea, step); 
+
+
+        int count = 0;
+        for (int i=0; i < results.size(); i++) {
+            if (results[i] == 1) count++;
+        }
         
         for (int i=0; i<(image.h-blockHeight); i+= step) {
             for (int j=0; j<(image.w-blockWidth); j+= step) {
@@ -92,6 +99,8 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
                 //         continue;
                 //     }
                 // }
+
+                // std::cout<<results[0]<<"\n";
 
                 if (results[i * image.w + j] == 1) {
                     total++;
@@ -106,6 +115,7 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
 
             }
         }
+
                 
         scale *= m_scaleFactor;
         blockWidth = static_cast<int>(scale * minWidth);
@@ -188,9 +198,8 @@ bool ViolaJones::intersect_rect(Rect rect1, Rect rect2) {
 }
 
 
-bool ViolaJones::evalStages(std::vector<double> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, float scale) {
+bool ViolaJones::evalStages(std::vector<double> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, float scale, float inverseArea) {
 
-    float inverseArea = (float) 1.0 / (blockWidth * blockHeight);
     int wba = i * width + j;
     int wbb = wba + blockWidth;
     int wbd = wba + blockHeight * width;

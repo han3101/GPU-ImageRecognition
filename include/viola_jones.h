@@ -35,13 +35,13 @@ private:
     float m_regions_overlap = 0.3;
 
     // Detection window variables
-    float m_edgeDensity = 0.025;
+    float m_edgeDensity = 0.02;
     float m_initialScale = 1.0;
     float m_scaleFactor = 1.25;
     float m_stepSize = 1.5;
 
     std::vector<Rect> merge_rectangles(Image& image, std::vector<Rect> rects);
-    bool evalStages(std::vector<double> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, float scale);
+    bool evalStages(std::vector<double> haar, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int i, int j, int width, int blockWidth, int blockHeight, float scale, float inverseArea);
 
     bool edgeExclude(float edgeDensity, std::unique_ptr<u_int32_t[]>& integralImageSobel, int i, int j, int width, int blockWidth, int blockHeight);
 

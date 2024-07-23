@@ -36,12 +36,13 @@ make clean-all
 ```
 
 # Demo
-![Sample Image](./demo_imgs/tkl.jpeg)
+<img src="./demo_imgs/tkl.jpeg" alt="TKL" width="200" height="150">
+<img src="./demo_imgs/demo.jpeg" alt="stock" width="200" height="150">
+<img src="./demo_imgs/hotd.jpeg" alt="hotd" width="200" height="150">
 
 # TODO
-1. Fix up detection accuracy.
-2. Fix up edge density speed up to ignore parts of the image that are not close.
-3. Update main.cpp to handle command line arguments instead.
-4. Configure CMAKE file to have a order of priority where it tries OpenCL -> CPU OpenMP -> CPU single-threaded. 
+1. Update main.cpp to handle command line arguments instead.
+2. Configure CMAKE file to have a order of priority where it tries OpenCL -> CPU OpenMP -> CPU single-threaded. 
+3. Make application compatible with openCV's haarcascade.xml classifier files
 
 

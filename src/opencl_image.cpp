@@ -918,12 +918,12 @@ void OpenCLImageProcessor::local_binary_pattern(Image& image) {
 
 }
 
-void OpenCLImageProcessor::evalStages(Image& image, std::vector<double> haar, std::vector<int> results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int blockWidth, int blockHeight, float scale, float inverseArea) {
+void OpenCLImageProcessor::evalStages(Image& image, std::vector<double>& haar, std::vector<int>& results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int blockWidth, int blockHeight, float scale, float inverseArea, int step) {
 
     // Prepare memory
     size_t bytes_h = haar.size() * sizeof(double);
     size_t bytes_i = (image.w * image.h) * sizeof(uint32_t);
-    size_t bytes_r = ((image.h-blockHeight) * (image.w-blockWidth) * sizeof(int));
+    size_t bytes_r = ((image.h) * (image.w) * sizeof(int));
     cl::Buffer haar_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_h, haar.data());
     cl::Buffer integralImage_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImage.get());
     cl::Buffer integralImageSquare_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImageSquare.get());
@@ -957,9 +957,10 @@ void OpenCLImageProcessor::evalStages(Image& image, std::vector<double> haar, st
     kernel.setArg(9, blockHeight);
     kernel.setArg(10, scale);
     kernel.setArg(11, inverseArea);
+    kernel.setArg(12, step);
 
     // Set dimensions
-    cl::NDRange global(image.w-blockWidth, image.h-blockHeight);
+    cl::NDRange global(image.w, image.h);
     
 
 #ifdef PROFILE

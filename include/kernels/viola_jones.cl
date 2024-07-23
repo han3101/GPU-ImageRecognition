@@ -10,17 +10,21 @@ __kernel void evalStages(
     int block_w,
     int block_h,
     float scale,
-    float inverseArea
+    float inverseArea,
+    int step
 ) 
 {
     /* get global position in Y direction */
-    int row = get_global_id(1);
+    int row = get_global_id(1) * step;
     /* get global position in X direction */
-    int col = get_global_id(0);
+    int col = get_global_id(0) * step;
 
     if (row >= (height - block_h) || col >= (width - block_w)) {
         return;
     }
+
+    // Debugging output
+    // printf("Thread (%d, %d): Starting evaluation\n", row, col);
     
     int wba = row * width + col;
     int wbb = wba + block_w;
@@ -38,12 +42,12 @@ __kernel void evalStages(
     int pass = 1;
 
     for (int w = 2; w < haar_size; ) {
-        double stageSum = 0;
+        double stageSum = 0.0f;
         double stageThreshold = haar[w++];
         double nodeLength = haar[w++];
 
         while (nodeLength--) {
-            float rectsSum = 0.0;
+            float rectsSum = 0.0f;
             double tilted = haar[w++];
             double rectsLength = haar[w++];
 
@@ -87,8 +91,9 @@ __kernel void evalStages(
 
         if (stageSum < stageThreshold) {
             pass = 0;
+            break;
         }
     }
 
-    result[row * width + col] = 1;
+    result[row * width + col] = pass ? 1: 0;
 }
