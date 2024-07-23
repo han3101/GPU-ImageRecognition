@@ -36,9 +36,11 @@ make clean-all
 ```
 
 # Demo
-<img src="./demo_imgs/tkl.jpeg" alt="TKL" width="200" height="150">
-<img src="./demo_imgs/demo.jpeg" alt="stock" width="200" height="150">
-<img src="./demo_imgs/hotd.jpeg" alt="hotd" width="200" height="150">
+<p>
+<img src="./demo_imgs/tkl.jpeg" alt="TKL" width="150" height="150">
+<img src="./demo_imgs/demo.jpeg" alt="stock" width="250" height="150">
+</p>
+<img src="./demo_imgs/hotd.jpeg" alt="hotd">
 
 # TODO
 1. Update main.cpp to handle command line arguments instead.
