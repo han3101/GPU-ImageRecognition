@@ -25,8 +25,8 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
     while (blockWidth < image.w && blockHeight < image.h) {
         int step = static_cast<int>(scale * m_stepSize);
         
-        for (int i=0; i<(image.h-blockHeight); i++) {
-            for (int j=0; j<(image.w-blockWidth); j++) {
+        for (int i=0; i<(image.h-blockHeight); i+= step) {
+            for (int j=0; j<(image.w-blockWidth); j+= step) {
 
                 // if (m_edgeDensity > 0) {
                 //     if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
@@ -84,8 +84,8 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
 
         opencl.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, blockWidth, blockHeight, scale, inverseArea); 
         
-        for (int i=0; i<(image.h-blockHeight); i++) {
-            for (int j=0; j<(image.w-blockWidth); j++) {
+        for (int i=0; i<(image.h-blockHeight); i+= step) {
+            for (int j=0; j<(image.w-blockWidth); j+= step) {
 
                 // if (m_edgeDensity > 0) {
                 //     if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {

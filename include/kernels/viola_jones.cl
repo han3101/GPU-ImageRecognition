@@ -18,7 +18,7 @@ __kernel void evalStages(
     /* get global position in X direction */
     int col = get_global_id(0);
 
-    if (row >= height - block_h || col >= width - block_w) {
+    if (row >= (height - block_h) || col >= (width - block_w)) {
         return;
     }
     

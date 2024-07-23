@@ -35,7 +35,10 @@ To clean up the project, run:
 make clean-all
 ```
 
-TODO
+# Demo
+![Sample Image](./demo_imgs/tkl.jpeg)
+
+# TODO
 1. Fix up detection accuracy.
 2. Fix up edge density speed up to ignore parts of the image that are not close.
 3. Update main.cpp to handle command line arguments instead.

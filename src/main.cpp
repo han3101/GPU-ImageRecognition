@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
     // Image cat("imgs/cat.jpeg");
-    Image tkl("imgs/tkl.jpg");
+    Image tkl("imgs/boston.jpeg");
 
     // Image gpu_test = testHD;
 

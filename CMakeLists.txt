@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.30.0)
 project(ImageRecognition VERSION 0.0.1)
 
 # Set the C++ standard
@@ -15,13 +15,15 @@ add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 enable_testing()
 
 # Check for CUDA
-find_package(CUDA QUIET)
-if(CUDA_FOUND)
-    message(STATUS "CUDA found, setting custom paths for OpenCL.")
+# find_package(CUDA QUIET)
+enable_language(CUDA)
+find_package(CUDAToolkit QUIET)
+if(CUDAToolkit_FOUND)
+    message(STATUS "CUDA Toolkit found, setting custom paths for OpenCL.")
     set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/include)
     set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/lib64)
 else()
-    message(STATUS "CUDA not found, using default OpenCL paths.")
+    message(STATUS "CUDA Toolkit not found, using default OpenCL paths.")
 endif()
 
 # Build program

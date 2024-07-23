@@ -396,6 +396,7 @@ src/viola_jones.o: src/viola_jones.cpp.o
 # target to build an object file
 src/viola_jones.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ImageRecognition.dir/build.make CMakeFiles/ImageRecognition.dir/src/viola_jones.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ImageRecognition_test.dir/build.make CMakeFiles/ImageRecognition_test.dir/src/viola_jones.cpp.o
 .PHONY : src/viola_jones.cpp.o
 
 src/viola_jones.i: src/viola_jones.cpp.i
@@ -404,6 +405,7 @@ src/viola_jones.i: src/viola_jones.cpp.i
 # target to preprocess a source file
 src/viola_jones.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ImageRecognition.dir/build.make CMakeFiles/ImageRecognition.dir/src/viola_jones.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ImageRecognition_test.dir/build.make CMakeFiles/ImageRecognition_test.dir/src/viola_jones.cpp.i
 .PHONY : src/viola_jones.cpp.i
 
 src/viola_jones.s: src/viola_jones.cpp.s
@@ -412,6 +414,7 @@ src/viola_jones.s: src/viola_jones.cpp.s
 # target to generate assembly for a file
 src/viola_jones.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ImageRecognition.dir/build.make CMakeFiles/ImageRecognition.dir/src/viola_jones.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ImageRecognition_test.dir/build.make CMakeFiles/ImageRecognition_test.dir/src/viola_jones.cpp.s
 .PHONY : src/viola_jones.cpp.s
 
 # Help Target
