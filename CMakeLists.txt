@@ -16,9 +16,10 @@ enable_testing()
 
 # Check for CUDA
 # find_package(CUDA QUIET)
-enable_language(CUDA)
+
 find_package(CUDAToolkit QUIET)
 if(CUDAToolkit_FOUND)
+    enable_language(CUDA)
     message(STATUS "CUDA Toolkit found, setting custom paths for OpenCL.")
     set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/include)
     set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/lib64)

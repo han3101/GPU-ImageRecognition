@@ -28,11 +28,11 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
         for (int i=0; i<(image.h-blockHeight); i+= step) {
             for (int j=0; j<(image.w-blockWidth); j+= step) {
 
-                // if (m_edgeDensity > 0) {
-                //     if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
-                //         continue;
-                //     }
-                // }
+                if (m_edgeDensity > 0) {
+                    if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
+                        continue;
+                    }
+                }
                 
                 if (this->evalStages(haar, image.integralImage, image.integralImageSquare, image.integralImageTilt, i, j, image.w, blockWidth, blockHeight, scale, inverseArea)) {
                     // std::cout<<"Thread ("<<i<<", "<<j<<")\n";
