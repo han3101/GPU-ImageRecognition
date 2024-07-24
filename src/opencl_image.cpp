@@ -990,3 +990,130 @@ void OpenCLImageProcessor::evalStages(Image& image, std::vector<double>& haar, s
 #endif
 
 }
+
+void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt,  std::unique_ptr<u_int32_t[]>& integralImageSobel) {
+    
+    if (image.channels > 1) {
+        this->grayscale_lum(image);
+    }
+
+    // Prepare memory
+    size_t bytes_i = (image.w * image.h) * sizeof(uint32_t);
+    size_t bytes_d = (image.h * image.w * sizeof(uint8_t));
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, image.data);
+    cl::Buffer integralImage_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+    cl::Buffer integralImageSquare_d, integralImageTilt_d, integralImageSobel_d;
+
+    // Load Kernel
+    std::string kernel_code = loadKernelSource("include/kernels/integral_sum.cl");
+    //Appending the kernel, which is presented here as a string. 
+    cl::Program::Sources sources;
+    sources.push_back({ kernel_code.c_str(),kernel_code.length() });
+
+    // Compile program
+    cl::Program program(m_context, sources);
+    if (program.build({ m_device }) != CL_SUCCESS) {
+        std::cout << " Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(m_device) << "\n";
+        exit(1);
+    }
+
+    // Load in kernel args
+    cl::Kernel kernel(program, "integralImage");
+    kernel.setArg(0, data_d);
+    kernel.setArg(1, integralImage_d);
+    kernel.setArg(2, image.w);
+    kernel.setArg(3, image.h);
+
+    cl::Kernel kernelSquare, kernelTilt, kernelSobel;
+
+    if (integralImageSquare) {
+        integralImageSquare_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+        kernelSquare = cl::Kernel(program, "integralImage");
+        kernelSquare.setArg(0, data_d);
+        kernelSquare.setArg(1, integralImageSquare_d);
+        kernelSquare.setArg(2, image.w);
+        kernelSquare.setArg(3, image.h);
+    }
+
+    if (integralImageTilt) {
+        integralImageTilt_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+        kernelTilt = cl::Kernel(program, "integralImage");
+        kernelTilt.setArg(0, data_d);
+        kernelTilt.setArg(1, integralImageTilt_d);
+        kernelTilt.setArg(2, image.w);
+        kernelTilt.setArg(3, image.h);
+    }
+
+    if (integralImageSobel) {
+        Image sobel = image;
+        Mask::EdgeSobelX sobelX;
+    	Mask::EdgeSobelY sobelY;
+        this->std_convolve_clamp_to_0(sobel, &sobelX);
+        this->std_convolve_clamp_to_0(sobel, &sobelY);
+        integralImageSobel_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+        cl::Buffer sobel_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, sobel.data);
+        kernelSobel = cl::Kernel(program, "integralImage");
+        kernelSobel.setArg(0, sobel_d);
+        kernelSobel.setArg(1, integralImageSobel_d);
+        kernelSobel.setArg(2, image.w);
+        kernelSobel.setArg(3, image.h);
+    }
+
+    // Set dimensions
+    cl::NDRange global(image.w, image.h);
+    
+
+#ifdef PROFILE
+    // For Profiling
+    cl::Event event;
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    if (integralImageSquare) {
+        m_queue.enqueueNDRangeKernel(kernelSquare, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    }
+    if (integralImageTilt) {
+        m_queue.enqueueNDRangeKernel(kernelTilt, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    }
+    if (integralImageSobel) {
+        m_queue.enqueueNDRangeKernel(kernelSobel, cl::NullRange, global, cl::NullRange, nullptr, &event);
+    }
+#else
+    m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
+    if (integralImageSquare) {
+        m_queue.enqueueNDRangeKernel(kernelSquare, cl::NullRange, global, cl::NullRange);
+    }
+    if (integralImageTilt) {
+        m_queue.enqueueNDRangeKernel(kernelTilt, cl::NullRange, global, cl::NullRange);
+    }
+    if (integralImageSobel) {
+        m_queue.enqueueNDRangeKernel(kernelSobel, cl::NullRange, global, cl::NullRange);
+    }
+#endif
+
+    m_queue.finish();
+
+    // Read back the results
+    m_queue.enqueueReadBuffer(integralImage_d, CL_TRUE, 0, bytes_i, integralImage.get());
+    if (integralImageSquare) {
+        m_queue.enqueueReadBuffer(integralImageSquare_d, CL_TRUE, 0, bytes_i, integralImageSquare.get());
+    }
+    if (integralImageTilt) {
+        m_queue.enqueueReadBuffer(integralImageTilt_d, CL_TRUE, 0, bytes_i, integralImageTilt.get());
+    }
+    if (integralImageSobel) {
+        m_queue.enqueueReadBuffer(integralImageSobel_d, CL_TRUE, 0, bytes_i, integralImageSobel.get());
+    }
+
+#ifdef PROFILE
+    // Get profiling information
+    cl_ulong time_start;
+    cl_ulong time_end;
+    event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+    event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+
+    // Compute the elapsed time in nanoseconds
+    cl_ulong elapsed_time = time_end - time_start;
+
+    std::cout << "Kernel execution time: " << (double) elapsed_time / 1000000 << " ms" << std::endl;
+#endif
+
+}
