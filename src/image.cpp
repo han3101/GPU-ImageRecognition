@@ -480,3 +480,68 @@ void Image::integralImage_cpu(std::unique_ptr<u_int32_t[]>& integralImage, std::
 		}
 	}
 }
+
+void Image::integralImage_mp(std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSobel, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt) {
+	
+	this->grayscale_cpu();
+	Image sobel = *this;
+
+	if (integralImageSobel) {
+		Mask::EdgeSobelX sobelX;
+    	Mask::EdgeSobelY sobelY;
+
+		sobel.std_convolve_clamp_to_0_cpu(0, &sobelX);
+		sobel.std_convolve_clamp_to_0_cpu(0, &sobelY);
+
+	}
+
+	// Image rsat = *this;
+	// integralImageTilt[0] = data[0];
+	
+	// Row prefix
+	#pragma omp parallel for
+	for (int i = 0; i < h; i++) {
+		for (int j = 0; j < w; j++) {
+			if (j == 0) {
+				integralImage[i * w + j] = data[i * w + j];
+				if (integralImageSquare) {
+					integralImageSquare[i * w + j] = data[i * w + j] * data[i * w + j];
+				}
+				if (integralImageSobel) {
+					integralImageSobel[i * w + j] = sobel.data[i * w + j];
+				}
+			} else {
+				integralImage[i * w + j] = data[i * w + j] + integralImage[i * w + (j-1)];
+				if (integralImageSquare) {
+					integralImageSquare[i * w + j] = (data[i * w + j] * data[i * w + j]) + integralImageSquare[i * w + (j-1)];
+				}
+				if (integralImageSobel) {
+					integralImageSobel[i * w + j] = sobel.data[i * w + j] + integralImageSobel[i * w + (j-1)];
+				}
+			}
+
+			// RSAT
+			// if (integralImageTilt) {
+			// 	if (i > 0 && j > 0) {
+			// 		integralImageTilt[i * w + j] = data[i * w + j] + integralImageTilt[(i-1) * w + (j-1)];
+			// 	}
+			// }
+			
+		}
+	}
+
+	// Col prefix
+	#pragma omp parallel for
+	for (int j = 0; j < w; j++) {
+		for (int i = 0; i < h; i++) {
+			integralImage[i * w + j] += integralImage[(i-1) * w + j];
+			if (integralImageSquare) {
+				integralImageSquare[i * w + j] += integralImageSquare[(i-1) * w + j];
+			}
+			if (integralImageSobel) {
+				integralImageSobel[i * w + j] += integralImageSobel[(i-1) * w + j];
+			}
+			
+		}
+	}
+}

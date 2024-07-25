@@ -21,19 +21,22 @@ __kernel void integralImage(
     
 
     // Row prefix sum
-    for (int i = 0; i < width; i++) {
-        if (i == 0) {
-        integralImage[row * width + i] = data[row * width + i];
-        if (integralImageSquare != (__global uint *) 0) {
-            integralImageSquare[row * width + i] = data[row * width + i] * data[row * width + i];
-        }
-        } else {
-            integralImage[row * width + i] = data[row * width + i] + integralImage[row * width + i-1];
+    if (col == 0) {
+        for (int i = 0; i < width; i++) {
+            if (i == 0) {
+            integralImage[row * width + i] = data[row * width + i];
             if (integralImageSquare != (__global uint *) 0) {
-                integralImageSquare[row * width + i] = (data[row * width + i] * data[row * width + i]) + integralImageSquare[row * width + i-1];
+                integralImageSquare[row * width + i] = data[row * width + i] * data[row * width + i];
+            }
+            } else {
+                integralImage[row * width + i] = data[row * width + i] + integralImage[row * width + i-1];
+                if (integralImageSquare != (__global uint *) 0) {
+                    integralImageSquare[row * width + i] = (data[row * width + i] * data[row * width + i]) + integralImageSquare[row * width + i-1];
+                }
             }
         }
     }
+    
 
 
     barrier(CLK_GLOBAL_MEM_FENCE);

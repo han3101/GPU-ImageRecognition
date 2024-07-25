@@ -66,12 +66,10 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
         image.integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
     }
 
-    // image.integralImage = std::make_unique<uint32_t[]>(image.w * image.h);
-    // image.integralImageSquare = std::make_unique<uint32_t[]>(image.w * image.h);
-    // image.integralImageTilt = std::make_unique<uint32_t[]>(image.w * image.h);
 
     if (image.integralImage == nullptr) {
-        image.integralImage_cpu();
+        // image.integralImage_cpu();
+        image.integralImage_mp();
     }
 
     // opencl.integralImage(image, image.integralImage, image.integralImageSquare, image.integralImageTilt, image.integralImageSobel);

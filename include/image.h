@@ -103,4 +103,14 @@ public:
 		this->integralImage_cpu(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
 	}
 
+	void integralImage_mp(std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSobel, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt);
+	void integralImage_mp() {
+		if (integralImage == nullptr) {
+			integralImage = std::make_unique<uint32_t[]>(w * h);
+			integralImageSquare = std::make_unique<uint32_t[]>(w * h);
+			integralImageTilt = std::make_unique<uint32_t[]>(w * h);
+		}
+		this->integralImage_mp(integralImage, integralImageSobel, integralImageSquare, integralImageTilt);
+	}
+
 };
