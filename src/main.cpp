@@ -43,8 +43,8 @@ int main(int argc, char** argv) {
     faceTrack.set_stepSize(1.5);
 
     Image colortkl = tkl;
-    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
-    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
+    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
+    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
     
     std::cout<<"Before draw"<<"\n";
     faceTrack.draw(colortkl, faces);

@@ -1002,7 +1002,7 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     size_t bytes_d = (image.h * image.w * sizeof(uint8_t));
     cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, image.data);
     cl::Buffer integralImage_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
-    cl::Buffer integralImageSquare_d, integralImageTilt_d, integralImageSobel_d;
+    cl::Buffer debugBuffer_d(m_context, CL_MEM_WRITE_ONLY, 3 * sizeof(uint32_t));
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/integral_sum.cl");
@@ -1023,41 +1023,23 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     kernel.setArg(1, integralImage_d);
     kernel.setArg(2, image.w);
     kernel.setArg(3, image.h);
+    kernel.setArg(4, debugBuffer_d);
 
-    cl::Kernel kernelSquare, kernelTilt, kernelSobel;
 
-    if (integralImageSquare) {
-        integralImageSquare_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
-        kernelSquare = cl::Kernel(program, "integralImage");
-        kernelSquare.setArg(0, data_d);
-        kernelSquare.setArg(1, integralImageSquare_d);
-        kernelSquare.setArg(2, image.w);
-        kernelSquare.setArg(3, image.h);
-    }
-
-    if (integralImageTilt) {
-        integralImageTilt_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
-        kernelTilt = cl::Kernel(program, "integralImage");
-        kernelTilt.setArg(0, data_d);
-        kernelTilt.setArg(1, integralImageTilt_d);
-        kernelTilt.setArg(2, image.w);
-        kernelTilt.setArg(3, image.h);
-    }
-
-    if (integralImageSobel) {
-        Image sobel = image;
-        Mask::EdgeSobelX sobelX;
-    	Mask::EdgeSobelY sobelY;
-        this->std_convolve_clamp_to_0(sobel, &sobelX);
-        this->std_convolve_clamp_to_0(sobel, &sobelY);
-        integralImageSobel_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
-        cl::Buffer sobel_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, sobel.data);
-        kernelSobel = cl::Kernel(program, "integralImage");
-        kernelSobel.setArg(0, sobel_d);
-        kernelSobel.setArg(1, integralImageSobel_d);
-        kernelSobel.setArg(2, image.w);
-        kernelSobel.setArg(3, image.h);
-    }
+    // if (integralImageSobel) {
+    //     Image sobel = image;
+    //     Mask::EdgeSobelX sobelX;
+    // 	Mask::EdgeSobelY sobelY;
+    //     this->std_convolve_clamp_to_0(sobel, &sobelX);
+    //     this->std_convolve_clamp_to_0(sobel, &sobelY);
+    //     integralImageSobel_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+    //     cl::Buffer sobel_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, sobel.data);
+    //     kernelSobel = cl::Kernel(program, "integralImage");
+    //     kernelSobel.setArg(0, sobel_d);
+    //     kernelSobel.setArg(1, integralImageSobel_d);
+    //     kernelSobel.setArg(2, image.w);
+    //     kernelSobel.setArg(3, image.h);
+    // }
 
     // Set dimensions
     cl::NDRange global(image.w, image.h);
@@ -1067,41 +1049,18 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     // For Profiling
     cl::Event event;
     m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange, nullptr, &event);
-    if (integralImageSquare) {
-        m_queue.enqueueNDRangeKernel(kernelSquare, cl::NullRange, global, cl::NullRange, nullptr, &event);
-    }
-    if (integralImageTilt) {
-        m_queue.enqueueNDRangeKernel(kernelTilt, cl::NullRange, global, cl::NullRange, nullptr, &event);
-    }
-    if (integralImageSobel) {
-        m_queue.enqueueNDRangeKernel(kernelSobel, cl::NullRange, global, cl::NullRange, nullptr, &event);
-    }
 #else
     m_queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
-    if (integralImageSquare) {
-        m_queue.enqueueNDRangeKernel(kernelSquare, cl::NullRange, global, cl::NullRange);
-    }
-    if (integralImageTilt) {
-        m_queue.enqueueNDRangeKernel(kernelTilt, cl::NullRange, global, cl::NullRange);
-    }
-    if (integralImageSobel) {
-        m_queue.enqueueNDRangeKernel(kernelSobel, cl::NullRange, global, cl::NullRange);
-    }
 #endif
 
     m_queue.finish();
 
     // Read back the results
+    std::vector<uint32_t> debugBuffer(3, 1);
     m_queue.enqueueReadBuffer(integralImage_d, CL_TRUE, 0, bytes_i, integralImage.get());
-    if (integralImageSquare) {
-        m_queue.enqueueReadBuffer(integralImageSquare_d, CL_TRUE, 0, bytes_i, integralImageSquare.get());
-    }
-    if (integralImageTilt) {
-        m_queue.enqueueReadBuffer(integralImageTilt_d, CL_TRUE, 0, bytes_i, integralImageTilt.get());
-    }
-    if (integralImageSobel) {
-        m_queue.enqueueReadBuffer(integralImageSobel_d, CL_TRUE, 0, bytes_i, integralImageSobel.get());
-    }
+    m_queue.enqueueReadBuffer(debugBuffer_d, CL_TRUE, 0, 3 * sizeof(uint32_t), debugBuffer.data());
+
+    std::cout << "Debug info: " << debugBuffer[0] << ", " << debugBuffer[1] << ", " << debugBuffer[2] << "\n";
 
 #ifdef PROFILE
     // Get profiling information

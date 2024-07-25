@@ -94,45 +94,6 @@ TEST(ImageTest, 2DDynamicGaus3) {
     EXPECT_EQ(is_black, 1);
 }
 
-// TEST(ImageTest, 1DDynamicGaus3_cpu) {
-
-//     Image testHD("imgs/cat.jpeg");
-//     Image target("imgs/tests/2Dgaus3cat.jpeg");
-
-//     ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
-//     ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
-
-//     Mask::GaussianDynamic1D gaussianBlur1(1, false);
-//     Mask::GaussianDynamic1D gaussianBlur2(1, true);
-
-//     auto start = std::chrono::high_resolution_clock::now();
-
-//     testHD.std_convolve_clamp_to_border_cpu(0, &gaussianBlur1);
-//     testHD.std_convolve_clamp_to_border_cpu(1, &gaussianBlur1);
-//     testHD.std_convolve_clamp_to_border_cpu(2, &gaussianBlur1);
-
-//     testHD.std_convolve_clamp_to_border_cpu(0, &gaussianBlur2);
-//     testHD.std_convolve_clamp_to_border_cpu(1, &gaussianBlur2);
-//     testHD.std_convolve_clamp_to_border_cpu(2, &gaussianBlur2);
-
-//     auto end = std::chrono::high_resolution_clock::now();
-//     std::chrono::duration<double> elapsed = end - start;
-//     std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
-
-//     OpenCLImageProcessor processor;
-
-//     processor.diffmap(testHD, target);
-//     // auto start = std::chrono::high_resolution_clock::now();
-
-//     int is_black = is_image_black(testHD);
-
-//     // auto end = std::chrono::high_resolution_clock::now();
-//     // std::chrono::duration<double> elapsed = end - start;
-//     // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
-
-
-//     EXPECT_EQ(is_black, 1);
-// }
 
 TEST(ImageTest, 1DDynamicGaus3Clamp0) {
 
@@ -290,4 +251,58 @@ TEST(ImageTest, simpleIntegralcpu) {
 
 
     EXPECT_EQ(integralImage2[24], 273);
+}
+
+TEST(ImageTest, OpenCLIntegralcpu) {
+
+    // Create a simple 3x3 test image
+    std::vector<int> pixels = {
+        1, 2, 3,
+        4, 5, 6,
+        7, 8, 9
+    };
+
+    std::vector<int> integratedPixels = {
+        1, 3, 6,
+        5, 12, 21,
+        12, 27, 45
+    };
+
+    std::vector<int> rotated_pixels = {
+        1, 2, 3,
+        7, 11, 11,
+        21, 29, 23
+    };
+
+    Image test(3, 3, 1);
+
+    for (int i=0; i < 9; i++) {
+        test.data[i] = pixels[i];
+    }
+
+    ASSERT_NE(test.data, nullptr) << "Failed to load test image.";
+
+    std::unique_ptr<u_int32_t[]> integralImage(new uint32_t[3 * 3]);
+    std::fill(integralImage.get(), integralImage.get() + 3 * 3, 0);
+    std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
+    std::unique_ptr<uint32_t[]> integralImageSquare(new uint32_t[3 * 3]);
+    std::unique_ptr<uint32_t[]> integralImageSquare_cpu(new uint32_t[3 * 3]);
+    std::unique_ptr<uint32_t[]> integralImageTilt = nullptr;
+    // std::fill(integralImageTilt.get(), integralImageTilt.get() + 3 * 3, 0);
+
+    OpenCLImageProcessor processor;
+    test.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare_cpu, integralImageTilt);
+    processor.integralImage(test, integralImage, integralImageSquare, integralImageTilt, integralImageSobel);
+
+
+    EXPECT_EQ(integralImage[8], 45);
+
+    for (int i = 0; i < 9; ++i) {
+        // std::cout<<i * 3 + j<<i<<j<<"\n";
+        // EXPECT_EQ(integralImageSquare[i], integralImageSquare_cpu[i]);
+        EXPECT_EQ(integralImage[i], integratedPixels[i]);
+        
+    }
+
+
 }
