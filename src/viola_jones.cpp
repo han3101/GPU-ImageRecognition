@@ -12,7 +12,8 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
     }
 
     if (image.integralImage == nullptr) {
-        image.integralImage_cpu();
+        // image.integralImage_cpu();
+        image.integralImage_mp();
     }
 
     

@@ -497,35 +497,39 @@ void Image::integralImage_mp(std::unique_ptr<u_int32_t[]>& integralImage, std::u
 
 	// Image rsat = *this;
 	// integralImageTilt[0] = data[0];
+
+	// Load initial data into integral images
+	#pragma omp parallel for
+	for (int i = 0; i < size; i++) {
+		integralImage[i] = static_cast<uint32_t>(data[i]);
+		if (integralImageSquare) {
+			integralImageSquare[i] = static_cast<uint32_t>(data[i] * data[i]);
+		}
+		if (integralImageSobel) {
+			integralImageSobel[i] = static_cast<uint32_t>(sobel.data[i]);
+		}
+		if (integralImageTilt) {
+			integralImageTilt[i] = static_cast<uint32_t>(data[i]);
+		}
+		
+	}
 	
 	// Row prefix
 	#pragma omp parallel for
 	for (int i = 0; i < h; i++) {
-		for (int j = 0; j < w; j++) {
-			if (j == 0) {
-				integralImage[i * w + j] = data[i * w + j];
-				if (integralImageSquare) {
-					integralImageSquare[i * w + j] = data[i * w + j] * data[i * w + j];
-				}
-				if (integralImageSobel) {
-					integralImageSobel[i * w + j] = sobel.data[i * w + j];
-				}
-			} else {
-				integralImage[i * w + j] = data[i * w + j] + integralImage[i * w + (j-1)];
-				if (integralImageSquare) {
-					integralImageSquare[i * w + j] = (data[i * w + j] * data[i * w + j]) + integralImageSquare[i * w + (j-1)];
-				}
-				if (integralImageSobel) {
-					integralImageSobel[i * w + j] = sobel.data[i * w + j] + integralImageSobel[i * w + (j-1)];
-				}
+		for (int j = 1; j < w; j++) {
+			integralImage[i * w + j] += integralImage[i * w + (j-1)];
+			if (integralImageSquare) {
+				integralImageSquare[i * w + j] += integralImageSquare[i * w + (j-1)];
+			}
+			if (integralImageSobel) {
+				integralImageSobel[i * w + j] += integralImageSobel[i * w + (j-1)];
 			}
 
 			// RSAT
-			// if (integralImageTilt) {
-			// 	if (i > 0 && j > 0) {
-			// 		integralImageTilt[i * w + j] = data[i * w + j] + integralImageTilt[(i-1) * w + (j-1)];
-			// 	}
-			// }
+			if (integralImageTilt && i > 0) {
+				integralImageTilt[i * w + j] += integralImageTilt[(i-1) * w + (j-1)];
+			}
 			
 		}
 	}
@@ -533,13 +537,26 @@ void Image::integralImage_mp(std::unique_ptr<u_int32_t[]>& integralImage, std::u
 	// Col prefix
 	#pragma omp parallel for
 	for (int j = 0; j < w; j++) {
-		for (int i = 0; i < h; i++) {
+		for (int i = 1; i < h; i++) {
 			integralImage[i * w + j] += integralImage[(i-1) * w + j];
 			if (integralImageSquare) {
 				integralImageSquare[i * w + j] += integralImageSquare[(i-1) * w + j];
 			}
 			if (integralImageSobel) {
 				integralImageSobel[i * w + j] += integralImageSobel[(i-1) * w + j];
+			}
+			// RSAT
+			if (integralImageTilt) {
+				integralImageTilt[i * w + j] += integralImageTilt[(i - 1) * w + j];
+				if (j > 0) {
+					integralImageTilt[i * w + j] += integralImageTilt[(i - 1) * w + (j - 1)];
+				}
+				if (j < w - 1) {
+					integralImageTilt[i * w + j] += integralImageTilt[(i - 1) * w + (j + 1)];
+				}
+				if (i > 1) {
+					integralImageTilt[i * w + j] -= integralImageTilt[(i - 2) * w + j];
+				}
 			}
 			
 		}
