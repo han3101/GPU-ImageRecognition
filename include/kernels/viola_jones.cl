@@ -11,7 +11,9 @@ __kernel void evalStages(
     int block_h,
     float scale,
     float inverseArea,
-    int step
+    int step,
+    float edgeDensity,
+    __constant uint *integralImageSobel
 ) 
 {
     /* get global position in Y direction */
@@ -30,6 +32,13 @@ __kernel void evalStages(
     int wbb = wba + block_w;
     int wbd = wba + block_h * width;
     int wbc = wbd + block_w;
+
+    // Edge Exclusion
+    if (edgeDensity > 0) {
+        float blockEdgeDensity = (float) (integralImageSobel[wba] - integralImageSobel[wbb] - integralImageSobel[wbd] + integralImageSobel[wbc]) / (block_w * block_h * 255);
+        if (blockEdgeDensity < edgeDensity) return;
+    }
+    
 
     float mean = (integralImage[wba] - integralImage[wbb] - integralImage[wbd] + integralImage[wbc]) * inverseArea;
     float variance = (integralImageSquare[wba] - integralImageSquare[wbb] - integralImageSquare[wbd] + integralImageSquare[wbc]) * inverseArea - mean * mean;

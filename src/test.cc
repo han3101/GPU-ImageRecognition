@@ -317,10 +317,11 @@ TEST(ImageTest, OpenCLIntegralsum) {
     };
 
     Image test2(4, 3, 1);
+    // Image test2("imgs/facetestgray.jpg");
 
-    for (int i=0; i < 12; i++) {
-        test2.data[i] = pixels1[i];
-    }
+    // for (int i=0; i < 12; i++) {
+    //     test2.data[i] = pixels1[i];
+    // }
 
     integralImage = std::make_unique<uint32_t[]>(test2.w * test2.h);
     integralImageSquare = std::make_unique<uint32_t[]>(test2.w * test2.h);

@@ -62,19 +62,19 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
     int total = 0;
     std::vector<Rect> rects;
 
-    // if (m_edgeDensity > 0) {
-    //     image.integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
-    // }
+    if (m_edgeDensity > 0) {
+        image.integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
+    }
 
-    image.integralImage = std::make_unique<uint32_t[]>(image.w * image.h);
-    image.integralImageSquare = std::make_unique<uint32_t[]>(image.w * image.h);
+    // image.integralImage = std::make_unique<uint32_t[]>(image.w * image.h);
+    // image.integralImageSquare = std::make_unique<uint32_t[]>(image.w * image.h);
     // image.integralImageTilt = std::make_unique<uint32_t[]>(image.w * image.h);
 
-    // if (image.integralImage == nullptr) {
-    //     image.integralImage_cpu();
-    // }
+    if (image.integralImage == nullptr) {
+        image.integralImage_cpu();
+    }
 
-    opencl.integralImage(image, image.integralImage, image.integralImageSquare, image.integralImageTilt, image.integralImageSobel);
+    // opencl.integralImage(image, image.integralImage, image.integralImageSquare, image.integralImageTilt, image.integralImageSobel);
 
     double minWidth = haar[0];
     double minHeight = haar[1];
@@ -88,7 +88,7 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
 
         std::vector<int> results((image.h) * (image.w));
 
-        opencl.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, blockWidth, blockHeight, scale, inverseArea, step); 
+        opencl.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, image.integralImageSobel, blockWidth, blockHeight, scale, inverseArea, step, m_edgeDensity); 
 
 
         int count = 0;

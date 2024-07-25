@@ -918,7 +918,7 @@ void OpenCLImageProcessor::local_binary_pattern(Image& image) {
 
 }
 
-void OpenCLImageProcessor::evalStages(Image& image, std::vector<double>& haar, std::vector<int>& results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int blockWidth, int blockHeight, float scale, float inverseArea, int step) {
+void OpenCLImageProcessor::evalStages(Image& image, std::vector<double>& haar, std::vector<int>& results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, std::unique_ptr<u_int32_t[]>& integralImageSobel, int blockWidth, int blockHeight, float scale, float inverseArea, int step, float edgeDensity) {
 
     // Prepare memory
     size_t bytes_h = haar.size() * sizeof(double);
@@ -929,6 +929,13 @@ void OpenCLImageProcessor::evalStages(Image& image, std::vector<double>& haar, s
     cl::Buffer integralImageSquare_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImageSquare.get());
     cl::Buffer integralImageTilt_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImageTilt.get());
     cl::Buffer result_d(m_context, CL_MEM_WRITE_ONLY, bytes_r);
+
+    cl::Buffer integralImageSobel_d;
+    if (integralImageSobel) {
+        integralImageSobel_d = cl::Buffer(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_i, integralImageSobel.get());
+    } else {
+        integralImageSobel_d = cl::Buffer(m_context, CL_MEM_READ_ONLY, 1);
+    }
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/viola_jones.cl");
@@ -958,6 +965,8 @@ void OpenCLImageProcessor::evalStages(Image& image, std::vector<double>& haar, s
     kernel.setArg(10, scale);
     kernel.setArg(11, inverseArea);
     kernel.setArg(12, step);
+    kernel.setArg(13, edgeDensity);
+    kernel.setArg(14, integralImageSobel_d);
 
     // Set dimensions
     cl::NDRange global(image.w, image.h);
@@ -995,14 +1004,16 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     
     if (image.channels > 1) {
         this->grayscale_lum(image);
+        // image.grayscale_cpu();
     }
 
     // Prepare memory
     size_t bytes_i = (image.w * image.h) * sizeof(uint32_t);
-    size_t bytes_d = (image.h * image.w * sizeof(uint8_t));
-    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, image.data);
+    size_t bytes_d = (image.size) * sizeof(uint8_t);
+    cl::Buffer data_d(m_context, CL_MEM_READ_ONLY , bytes_d);
     cl::Buffer integralImage_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
     cl::Buffer integralImageSquare_d, integralImageTilt_d, integralImageSobel_d, sobel_d;
+    m_queue.enqueueWriteBuffer(data_d, CL_TRUE, 0, bytes_d, image.data);
 
     if (integralImageSquare) {
         integralImageSquare_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);

@@ -44,7 +44,7 @@ __kernel void integralImage(
             integralImage[j * width + col] += integralImage[(j-1) * width + col];
             if (integralImageSquare != (__global uint *) 0) {
                 integralImageSquare[j * width + col] += integralImageSquare[(j-1) * width + col];
-                printf("%d\n", integralImageSquare[j * width + col]);
+                // printf("%d\n", integralImageSquare[j * width + col]);
             }
         }
     }
