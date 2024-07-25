@@ -1,10 +1,9 @@
 __kernel void integralImage(
     __constant uchar *data,
     __global uint *integralImage,
-    // __global uint *integralImageSquare,
+    __global uint *integralImageSquare,
     int width,
-    int height,
-    __global uint *debugBuffer
+    int height
 ) 
 {
 
@@ -25,15 +24,14 @@ __kernel void integralImage(
     for (int i = 0; i < width; i++) {
         if (i == 0) {
         integralImage[row * width + i] = data[row * width + i];
-        // if (integralImageSquare != (__global uint *) 0) {
-        //     printf("hi2");
-        //     integralImageSquare[row * width + i] = data[row * width + i] * data[row * width + i];
-        // }
+        if (integralImageSquare != (__global uint *) 0) {
+            integralImageSquare[row * width + i] = data[row * width + i] * data[row * width + i];
+        }
         } else {
             integralImage[row * width + i] = data[row * width + i] + integralImage[row * width + i-1];
-            // if (integralImageSquare != (__global uint *) 0) {
-            //     integralImageSquare[row * width + i] = (data[row * width + i] * data[row * width + i]) + integralImageSquare[row * width + i-1];
-            // }
+            if (integralImageSquare != (__global uint *) 0) {
+                integralImageSquare[row * width + i] = (data[row * width + i] * data[row * width + i]) + integralImageSquare[row * width + i-1];
+            }
         }
     }
 
@@ -44,9 +42,10 @@ __kernel void integralImage(
     if (row == 0) {
         for (int j=0; j < height; j++) {
             integralImage[j * width + col] += integralImage[(j-1) * width + col];
-            // if (integralImageSquare != (__global uint *) 0) {
-            //     integralImageSquare[j * width + col] += integralImageSquare[(j-1) * width + col];
-            // }
+            if (integralImageSquare != (__global uint *) 0) {
+                integralImageSquare[j * width + col] += integralImageSquare[(j-1) * width + col];
+                printf("%d\n", integralImageSquare[j * width + col]);
+            }
         }
     }
     

@@ -1002,7 +1002,25 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     size_t bytes_d = (image.h * image.w * sizeof(uint8_t));
     cl::Buffer data_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, image.data);
     cl::Buffer integralImage_d(m_context, CL_MEM_WRITE_ONLY, bytes_i);
-    cl::Buffer debugBuffer_d(m_context, CL_MEM_WRITE_ONLY, 3 * sizeof(uint32_t));
+    cl::Buffer integralImageSquare_d, integralImageTilt_d, integralImageSobel_d, sobel_d;
+
+    if (integralImageSquare) {
+        integralImageSquare_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+        std::cout<<image.channels<<image.w<<image.h<<"\n";
+    }
+    // if (integralImageTilt) {
+    //     integralImageTilt_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+    // }
+    // if (integralImageSobel) {
+    //     Image sobel = image;
+    //     Mask::EdgeSobelX sobelX;
+    // 	Mask::EdgeSobelY sobelY;
+    //     this->std_convolve_clamp_to_0(sobel, &sobelX);
+    //     this->std_convolve_clamp_to_0(sobel, &sobelY);
+    //     integralImageSobel_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
+    //     sobel_d = cl::Buffer(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, sobel.data);
+    // }
+    
 
     // Load Kernel
     std::string kernel_code = loadKernelSource("include/kernels/integral_sum.cl");
@@ -1021,25 +1039,10 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     cl::Kernel kernel(program, "integralImage");
     kernel.setArg(0, data_d);
     kernel.setArg(1, integralImage_d);
-    kernel.setArg(2, image.w);
-    kernel.setArg(3, image.h);
-    kernel.setArg(4, debugBuffer_d);
+    kernel.setArg(2, integralImageSquare_d);
+    kernel.setArg(3, image.w);
+    kernel.setArg(4, image.h);
 
-
-    // if (integralImageSobel) {
-    //     Image sobel = image;
-    //     Mask::EdgeSobelX sobelX;
-    // 	Mask::EdgeSobelY sobelY;
-    //     this->std_convolve_clamp_to_0(sobel, &sobelX);
-    //     this->std_convolve_clamp_to_0(sobel, &sobelY);
-    //     integralImageSobel_d = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, bytes_i);
-    //     cl::Buffer sobel_d(m_context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes_d, sobel.data);
-    //     kernelSobel = cl::Kernel(program, "integralImage");
-    //     kernelSobel.setArg(0, sobel_d);
-    //     kernelSobel.setArg(1, integralImageSobel_d);
-    //     kernelSobel.setArg(2, image.w);
-    //     kernelSobel.setArg(3, image.h);
-    // }
 
     // Set dimensions
     cl::NDRange global(image.w, image.h);
@@ -1056,11 +1059,11 @@ void OpenCLImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t
     m_queue.finish();
 
     // Read back the results
-    std::vector<uint32_t> debugBuffer(3, 1);
     m_queue.enqueueReadBuffer(integralImage_d, CL_TRUE, 0, bytes_i, integralImage.get());
-    m_queue.enqueueReadBuffer(debugBuffer_d, CL_TRUE, 0, 3 * sizeof(uint32_t), debugBuffer.data());
-
-    std::cout << "Debug info: " << debugBuffer[0] << ", " << debugBuffer[1] << ", " << debugBuffer[2] << "\n";
+    if (integralImageSquare) {
+        m_queue.enqueueReadBuffer(integralImageSquare_d, CL_TRUE, 0, bytes_i, integralImageSquare.get());
+    }
+    
 
 #ifdef PROFILE
     // Get profiling information

@@ -253,7 +253,7 @@ TEST(ImageTest, simpleIntegralcpu) {
     EXPECT_EQ(integralImage2[24], 273);
 }
 
-TEST(ImageTest, OpenCLIntegralcpu) {
+TEST(ImageTest, OpenCLIntegralsum) {
 
     // Create a simple 3x3 test image
     std::vector<int> pixels = {
@@ -299,10 +299,38 @@ TEST(ImageTest, OpenCLIntegralcpu) {
 
     for (int i = 0; i < 9; ++i) {
         // std::cout<<i * 3 + j<<i<<j<<"\n";
-        // EXPECT_EQ(integralImageSquare[i], integralImageSquare_cpu[i]);
+        EXPECT_EQ(integralImageSquare[i], integralImageSquare_cpu[i]);
         EXPECT_EQ(integralImage[i], integratedPixels[i]);
         
     }
 
+    integralImageSquare = nullptr;
+    // Test if integralSumSquare is optional
+    processor.integralImage(test, integralImage, integralImageSquare, integralImageTilt, integralImageSobel);
+    EXPECT_EQ(integralImageSquare, nullptr);
 
+
+    std::vector<int> pixels1 = {
+        1, 2, 3, 5,
+        4, 5, 6, 5,
+        7, 8, 9, 5
+    };
+
+    Image test2(4, 3, 1);
+
+    for (int i=0; i < 12; i++) {
+        test2.data[i] = pixels1[i];
+    }
+
+    integralImage = std::make_unique<uint32_t[]>(test2.w * test2.h);
+    integralImageSquare = std::make_unique<uint32_t[]>(test2.w * test2.h);
+    integralImageSquare_cpu = std::make_unique<uint32_t[]>(test2.w * test2.h);
+
+    test2.integralImage_cpu(integralImage, integralImageSobel, integralImageSquare_cpu, integralImageTilt);
+    processor.integralImage(test2, integralImage, integralImageSquare, integralImageTilt, integralImageSobel);
+
+    for (int i = 0; i < 12; ++i) {
+        EXPECT_EQ(integralImageSquare[i], integralImageSquare_cpu[i]);
+        
+    }
 }
