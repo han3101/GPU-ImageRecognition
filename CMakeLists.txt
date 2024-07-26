@@ -32,8 +32,11 @@ if(CUDAToolkit_FOUND)
     set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 
     # Automatically detect the GPU architecture
-    set(CMAKE_CUDA_ARCHITECTURES all)
+    set(CMAKE_CUDA_ARCHITECTURES "60;70;75;80")
     set(NVCC_FLAGS "-O2")
+
+    # Define a preprocessor macro for CUDA
+    add_definitions(-DUSE_CUDA)
 else()
     message(STATUS "CUDA Toolkit not found, using default OpenCL paths.")
 endif()
@@ -44,9 +47,14 @@ set(APPLICATION_SOURCE
     src/image.cpp
     src/opencl_image.cpp
     src/viola_jones.cpp
-    src/cuda_image.cu
-    src/cuda_kernels.cu
 )
+
+if(CUDAToolkit_FOUND)
+    list(APPEND APPLICATION_SOURCE
+        src/cuda_image.cu
+        src/cuda_kernels.cu
+    )
+endif()
 
 set(APPLICATION_HEADERS 
     include/image.h

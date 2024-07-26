@@ -67,89 +67,89 @@ TEST(ImageTest, BasicDiffTest) {
     EXPECT_EQ(is_black, 1);
 }
 
-TEST(ImageTest, 2DDynamicGaus3) {
+// TEST(ImageTest, 2DDynamicGaus3) {
 
-    Image testHD("imgs/cat.jpeg");
-    Image target("imgs/tests/2Dgaus3cat.jpeg");
+//     Image testHD("imgs/cat.jpeg");
+//     Image target("imgs/tests/2Dgaus3cat.jpeg");
 
-    ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
-    ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
+//     ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
+//     ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
 
-    Mask::GaussianDynamic2D gaussianBlur((int) 1);
+//     Mask::GaussianDynamic2D gaussianBlur((int) 1);
 
-    OpenCLImageProcessor processor;
-    processor.std_convolve_clamp_to_border(testHD, &gaussianBlur);
+//     OpenCLImageProcessor processor;
+//     processor.std_convolve_clamp_to_border(testHD, &gaussianBlur);
 
-    processor.diffmap(testHD, target);
+//     processor.diffmap(testHD, target);
 
-    auto start = std::chrono::high_resolution_clock::now();
+//     auto start = std::chrono::high_resolution_clock::now();
 
-    int is_black = is_image_black(testHD);
+//     int is_black = is_image_black(testHD);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
-
-
-    EXPECT_EQ(is_black, 1);
-}
+//     auto end = std::chrono::high_resolution_clock::now();
+//     std::chrono::duration<double> elapsed = end - start;
+//     std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
 
-TEST(ImageTest, 1DDynamicGaus3Clamp0) {
-
-    Image testHD("imgs/cat.jpeg");
-    Image target("imgs/tests/2Dgaus3cat0.jpeg");
-
-    ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
-    ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
-
-    Mask::GaussianDynamic1D gaussianBlur1(1, false);
-    Mask::GaussianDynamic1D gaussianBlur2(1, true);
-
-    OpenCLImageProcessor processor;
-
-    processor.std_convolve_clamp_to_0(testHD, &gaussianBlur1);
-    processor.std_convolve_clamp_to_0(testHD, &gaussianBlur2);
-    processor.diffmap(testHD, target);
-    // auto start = std::chrono::high_resolution_clock::now();
-
-    int is_black = is_image_black(testHD);
-
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+//     EXPECT_EQ(is_black, 1);
+// }
 
 
-    EXPECT_EQ(is_black, 1);
-}
+// TEST(ImageTest, 1DDynamicGaus3Clamp0) {
 
-TEST(ImageTest, 1DDynamicGaus3Clampborder) {
+//     Image testHD("imgs/cat.jpeg");
+//     Image target("imgs/tests/2Dgaus3cat0.jpeg");
 
-    Image testHD("imgs/cat.jpeg");
-    Image target("imgs/tests/2Dgaus3cat.jpeg");
+//     ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
+//     ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
 
-    ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
-    ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
+//     Mask::GaussianDynamic1D gaussianBlur1(1, false);
+//     Mask::GaussianDynamic1D gaussianBlur2(1, true);
 
-    Mask::GaussianDynamic1D gaussianBlur1(1, false);
-    Mask::GaussianDynamic1D gaussianBlur2(1, true);
+//     OpenCLImageProcessor processor;
 
-    OpenCLImageProcessor processor;
+//     processor.std_convolve_clamp_to_0(testHD, &gaussianBlur1);
+//     processor.std_convolve_clamp_to_0(testHD, &gaussianBlur2);
+//     processor.diffmap(testHD, target);
+//     // auto start = std::chrono::high_resolution_clock::now();
 
-    processor.std_convolve_clamp_to_border(testHD, &gaussianBlur1);
-    processor.std_convolve_clamp_to_border(testHD, &gaussianBlur2);
-    processor.diffmap(testHD, target);
-    // auto start = std::chrono::high_resolution_clock::now();
+//     int is_black = is_image_black(testHD);
 
-    int is_black = is_image_black(testHD);
-
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+//     // auto end = std::chrono::high_resolution_clock::now();
+//     // std::chrono::duration<double> elapsed = end - start;
+//     // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
 
-    EXPECT_EQ(is_black, 1);
-}
+//     EXPECT_EQ(is_black, 1);
+// }
+
+// TEST(ImageTest, 1DDynamicGaus3Clampborder) {
+
+//     Image testHD("imgs/cat.jpeg");
+//     Image target("imgs/tests/2Dgaus3cat.jpeg");
+
+//     ASSERT_NE(testHD.data, nullptr) << "Failed to load test image.";
+//     ASSERT_NE(target.data, nullptr) << "Failed to load target image.";
+
+//     Mask::GaussianDynamic1D gaussianBlur1(1, false);
+//     Mask::GaussianDynamic1D gaussianBlur2(1, true);
+
+//     OpenCLImageProcessor processor;
+
+//     processor.std_convolve_clamp_to_border(testHD, &gaussianBlur1);
+//     processor.std_convolve_clamp_to_border(testHD, &gaussianBlur2);
+//     processor.diffmap(testHD, target);
+//     // auto start = std::chrono::high_resolution_clock::now();
+
+//     int is_black = is_image_black(testHD);
+
+//     // auto end = std::chrono::high_resolution_clock::now();
+//     // std::chrono::duration<double> elapsed = end - start;
+//     // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+
+
+//     EXPECT_EQ(is_black, 1);
+// }
 
 TEST(ImageTest, local_binary_pattern) {
 

@@ -1,7 +1,9 @@
 #include "image.h"
 #include "opencl_image.h"
 #include "viola_jones.h"
+#ifdef USE_CUDA
 #include "cuda_image.cuh"
+#endif
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
