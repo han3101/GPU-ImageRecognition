@@ -35,7 +35,7 @@ if(CUDAToolkit_FOUND)
     set(CMAKE_CUDA_ARCHITECTURES "60;70;75;80")
     set(NVCC_FLAGS "-O2")
 
-    # Define a preprocessor macro for CUDA
+    # Preprocessor macro for CUDA
     add_definitions(-DUSE_CUDA)
 else()
     message(STATUS "CUDA Toolkit not found, using default OpenCL paths.")

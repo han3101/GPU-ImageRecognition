@@ -1,6 +1,7 @@
 #include "cuda_image.cuh"
 #include <iostream>
 #include <cstdlib>
+#include <omp.h>
 
 CUDAImageProcessor::CUDAImageProcessor() {}
 
@@ -64,5 +65,100 @@ void CUDAImageProcessor::grayscale_lum(Image& image) {
     image.channels = 1;
 
     cudaFree(result_d);
+    cudaFree(data_d);
+}
+
+
+void CUDAImageProcessor::flipX(Image& image) {
+
+    // Allocate memory buffers
+    size_t bytes_i = image.size * sizeof(uint8_t);
+
+    uint8_t *data_d;
+    cudaMalloc(&data_d, bytes_i);
+
+    cudaMemcpy(data_d, image.data, bytes_i, cudaMemcpyHostToDevice);
+
+    int GRID_X = (image.w + THREADS - 1) / THREADS;
+    int GRID_Y = (image.h + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    flipX_cu<<<grid_dim, block_dim>>>(data_d, image.w, image.h, image.channels);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(image.data, data_d, bytes_i, cudaMemcpyDeviceToHost);
+
+    cudaFree(data_d);
+}
+
+void CUDAImageProcessor::flipY(Image& image) {
+
+    // Allocate memory buffers
+    size_t bytes_i = image.size * sizeof(uint8_t);
+
+    uint8_t *data_d;
+    cudaMalloc(&data_d, bytes_i);
+
+    cudaMemcpy(data_d, image.data, bytes_i, cudaMemcpyHostToDevice);
+
+    int GRID_X = (image.w + THREADS - 1) / THREADS;
+    int GRID_Y = (image.h + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    flipY_cu<<<grid_dim, block_dim>>>(data_d, image.w, image.h, image.channels);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(image.data, data_d, bytes_i, cudaMemcpyDeviceToHost);
+
+    cudaFree(data_d);
+}
+
+void CUDAImageProcessor::flipYvector(Image& image) {
+
+    if (image.channels != 3) {
+        std::cout<<"flipYvector only for 3 channel images, using flipY"<<std::endl;
+        this->flipY(image);
+        return;
+    }
+
+    // Allocate memory buffers
+    std::vector<uchar3> data_h(image.w * image.h);
+
+    #pragma omp parallel for
+    for (int i=0; i < image.w * image.h; i++) {
+        data_h[i].x = image.data[i * image.channels];
+        data_h[i].y = image.data[i * image.channels + 1];
+        data_h[i].z = image.data[i * image.channels + 2];
+    }
+    
+
+    uchar3* data_d;
+    cudaMalloc(&data_d, image.w * image.h * sizeof(uchar3));
+
+    cudaMemcpy(data_d, data_h.data(), image.w * image.h * sizeof(uchar3), cudaMemcpyHostToDevice);
+
+    int GRID_X = (image.w + THREADS - 1) / THREADS;
+    int GRID_Y = (image.h + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    flipYvector_cu<<<grid_dim, block_dim>>>(data_d, image.w, image.h);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(data_h.data(), data_d, image.w * image.h * sizeof(uchar3), cudaMemcpyDeviceToHost);
+
+
+    #pragma omp parallel for
+    for (int i=0; i < image.w * image.h; i++) {
+        image.data[i * image.channels] = data_h[i].x;
+        image.data[i * image.channels + 1] = data_h[i].y;
+        image.data[i * image.channels + 2] = data_h[i].z;
+    }
+
     cudaFree(data_d);
 }

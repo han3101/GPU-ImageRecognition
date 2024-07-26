@@ -70,9 +70,15 @@ int main(int argc, char** argv) {
     // // processor.diffmap(gpu_test, gpu_test);
     // // processor.local_binary_pattern(cat);
 
+    // processor.flipX(tkl);
+
     CUDAImageProcessor cudap;
 
-    cudap.grayscale_lum(tkl);
+    cudap.flipYvector(tkl);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
     tkl.write("output/diff.jpeg");
 
 	return 0;
