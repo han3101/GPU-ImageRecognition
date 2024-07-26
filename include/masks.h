@@ -1,8 +1,5 @@
 #pragma once
-#include "pch.h"
-#include <Eigen/Dense>
-
-
+#include "pch.h"    
 
 namespace Mask {
 
@@ -544,150 +541,150 @@ namespace Mask {
         }
     };
 
-    class GaussianDynamic2D : public BaseMask {
-    private:
+    // class GaussianDynamic2D : public BaseMask {
+    // private:
 
-        double sigma;
-        int width;
-        int height;
-        int cr;
-        int cc;
-        double filter_factor = 1.0;
-        std::vector<double> mask;
+    //     double sigma;
+    //     int width;
+    //     int height;
+    //     int cr;
+    //     int cc;
+    //     double filter_factor = 1.0;
+    //     std::vector<double> mask;
 
-    public:
+    // public:
 
-        GaussianDynamic2D(double sigma) {
-            double kernel_radius = std::ceil(sigma) * 3;
-            cr = cc = (int) kernel_radius;
-            width = height = (int) kernel_radius * 2 + 1;
+    //     GaussianDynamic2D(double sigma) {
+    //         double kernel_radius = std::ceil(sigma) * 3;
+    //         cr = cc = (int) kernel_radius;
+    //         width = height = (int) kernel_radius * 2 + 1;
 
-            // Generate matrix
-            Eigen::VectorXf ax = Eigen::VectorXf::LinSpaced(width, -kernel_radius, kernel_radius);
+    //         // Generate matrix
+    //         Eigen::VectorXf ax = Eigen::VectorXf::LinSpaced(width, -kernel_radius, kernel_radius);
 
-            Eigen::MatrixXf xx(width, height);
-            Eigen::MatrixXf yy(width, height);
+    //         Eigen::MatrixXf xx(width, height);
+    //         Eigen::MatrixXf yy(width, height);
 
-            for (int i = 0; i < height; ++i) {
-                for (int j = 0; j < width; ++j) {
-                    xx(i, j) = ax(j);
-                    yy(i, j) = ax(i);
-                }
-            }
+    //         for (int i = 0; i < height; ++i) {
+    //             for (int j = 0; j < width; ++j) {
+    //                 xx(i, j) = ax(j);
+    //                 yy(i, j) = ax(i);
+    //             }
+    //         }
 
-            Eigen::MatrixXf kernel = (-(xx.array().square() + yy.array().square()) / (2.0 * sigma * sigma)).exp();
-            // Normalize the kernel
-            kernel /= kernel.sum();
+    //         Eigen::MatrixXf kernel = (-(xx.array().square() + yy.array().square()) / (2.0 * sigma * sigma)).exp();
+    //         // Normalize the kernel
+    //         kernel /= kernel.sum();
 
-            // Flatten the 2D kernel matrix into a 1D vector
-            mask.resize(width * height);
-            for (int i = 0; i < width; ++i) {
-                for (int j = 0; j < height; ++j) {
-                    mask[i * width + j] = kernel(i, j);
-                }
-            }
+    //         // Flatten the 2D kernel matrix into a 1D vector
+    //         mask.resize(width * height);
+    //         for (int i = 0; i < width; ++i) {
+    //             for (int j = 0; j < height; ++j) {
+    //                 mask[i * width + j] = kernel(i, j);
+    //             }
+    //         }
 
-        }
+    //     }
 
-        GaussianDynamic2D() {
-            GaussianDynamic2D(1);
-        }
+    //     GaussianDynamic2D() {
+    //         GaussianDynamic2D(1);
+    //     }
 
-        int getWidth() const override {
-            return width;
-        }
+    //     int getWidth() const override {
+    //         return width;
+    //     }
 
-        int getHeight() const override {
-            return height;
-        }
+    //     int getHeight() const override {
+    //         return height;
+    //     }
 
-        int getCenterRow() const override {
-            return cr;
-        }
+    //     int getCenterRow() const override {
+    //         return cr;
+    //     }
 
-        int getCenterColumn() const override {
-            return cc;
-        }
+    //     int getCenterColumn() const override {
+    //         return cc;
+    //     }
 
-        double getFilterFactor() const override {
-            return filter_factor;
-        }
+    //     double getFilterFactor() const override {
+    //         return filter_factor;
+    //     }
 
-        const double* getData() const override {
-            return mask.data();
-        }
-    };
+    //     const double* getData() const override {
+    //         return mask.data();
+    //     }
+    // };
 
-    class GaussianDynamic1D : public BaseMask {
-    private:
+//     class GaussianDynamic1D : public BaseMask {
+//     private:
 
-        double sigma;
-        int width;
-        int height;
-        int cr;
-        int cc;
-        double filter_factor = 1.0;
-        std::vector<double> mask;
+//         double sigma;
+//         int width;
+//         int height;
+//         int cr;
+//         int cc;
+//         double filter_factor = 1.0;
+//         std::vector<double> mask;
 
-    public:
+//     public:
 
-        GaussianDynamic1D(double sigma, bool transpose) {
-            double kernel_radius = std::ceil(sigma) * 3;
-            int kernel_size = (int) kernel_radius * 2 + 1;
-            if (transpose) {
-                cr = (int) kernel_radius;
-                cc = 0;
-                height = kernel_size;
-                width = 1;
-            } else {
-                cc = (int) kernel_radius;
-                cr = 0;
-                width = kernel_size;
-                height = 1;
-            }
+//         GaussianDynamic1D(double sigma, bool transpose) {
+//             double kernel_radius = std::ceil(sigma) * 3;
+//             int kernel_size = (int) kernel_radius * 2 + 1;
+//             if (transpose) {
+//                 cr = (int) kernel_radius;
+//                 cc = 0;
+//                 height = kernel_size;
+//                 width = 1;
+//             } else {
+//                 cc = (int) kernel_radius;
+//                 cr = 0;
+//                 width = kernel_size;
+//                 height = 1;
+//             }
             
             
-            // Generate matrix
-            Eigen::VectorXf ax = Eigen::VectorXf::LinSpaced(kernel_size, -kernel_radius, kernel_radius);
+//             // Generate matrix
+//             Eigen::VectorXf ax = Eigen::VectorXf::LinSpaced(kernel_size, -kernel_radius, kernel_radius);
 
-            Eigen::VectorXf kernel = (-(ax.array().square()) / (2.0f * sigma * sigma)).exp();
-            // Normalize the kernel
-            kernel /= kernel.sum();
+//             Eigen::VectorXf kernel = (-(ax.array().square()) / (2.0f * sigma * sigma)).exp();
+//             // Normalize the kernel
+//             kernel /= kernel.sum();
 
-            if (transpose) kernel = kernel.transpose();
+//             if (transpose) kernel = kernel.transpose();
 
-            // Flatten the 2D kernel matrix into a 1D vector
-            mask.resize(kernel_size);
-            for (int i = 0; i < kernel_size; ++i) {
-                mask[i] = static_cast<double>(kernel(i));
-            }
+//             // Flatten the 2D kernel matrix into a 1D vector
+//             mask.resize(kernel_size);
+//             for (int i = 0; i < kernel_size; ++i) {
+//                 mask[i] = static_cast<double>(kernel(i));
+//             }
 
-        }
+//         }
 
 
-        int getWidth() const override {
-            return width;
-        }
+//         int getWidth() const override {
+//             return width;
+//         }
 
-        int getHeight() const override {
-            return height;
-        }
+//         int getHeight() const override {
+//             return height;
+//         }
 
-        int getCenterRow() const override {
-            return cr;
-        }
+//         int getCenterRow() const override {
+//             return cr;
+//         }
 
-        int getCenterColumn() const override {
-            return cc;
-        }
+//         int getCenterColumn() const override {
+//             return cc;
+//         }
 
-        double getFilterFactor() const override {
-            return filter_factor;
-        }
+//         double getFilterFactor() const override {
+//             return filter_factor;
+//         }
 
-        const double* getData() const override {
-            return mask.data();
-        }
-    };
+//         const double* getData() const override {
+//             return mask.data();
+//         }
+//     };
 
 }

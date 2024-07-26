@@ -1,6 +1,7 @@
 #include "image.h"
 #include "opencl_image.h"
 #include "viola_jones.h"
+#include "cuda_image.cuh"
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
@@ -37,24 +38,24 @@ int main(int argc, char** argv) {
     // cat.std_convolve_clamp_to_0_cpu(1, &sobelY);
     // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
-    ViolaJones faceTrack;
-    OpenCLImageProcessor processor;
-    HaarCasscades haar;
-    faceTrack.set_stepSize(1.5);
+    // ViolaJones faceTrack;
+    // OpenCLImageProcessor processor;
+    // HaarCasscades haar;
+    // faceTrack.set_stepSize(1.5);
 
-    Image colortkl = tkl;
-    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
-    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
+    // Image colortkl = tkl;
+    // // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
+    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
     
-    std::cout<<"Before draw"<<"\n";
-    faceTrack.draw(colortkl, faces);
+    // std::cout<<"Before draw"<<"\n";
+    // faceTrack.draw(colortkl, faces);
 
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end - start;
+    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    colortkl.write("output/lbp.jpeg");
+    // colortkl.write("output/lbp.jpeg");
 
 
     // OpenCLImageProcessor processor;
@@ -66,7 +67,11 @@ int main(int argc, char** argv) {
 
     // // processor.diffmap(gpu_test, gpu_test);
     // // processor.local_binary_pattern(cat);
-    // tkl.write("output/diff.jpeg");
+
+    CUDAImageProcessor cudap;
+
+    cudap.grayscale_lum(tkl);
+    tkl.write("output/diff.jpeg");
 
 	return 0;
 }

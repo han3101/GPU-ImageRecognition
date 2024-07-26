@@ -1,7 +1,7 @@
-#include "../include/opencl_image.h"
+#include "opencl_image.h"
 #include <fstream>
 #include <iostream>
-#include<cstdlib>
+#include <cstdlib>
 
 
 std::string OpenCLImageProcessor::getErrorString(cl_int error) {

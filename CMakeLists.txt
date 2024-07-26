@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.30.0)
-project(ImageRecognition VERSION 0.0.1)
+project(ImageRecognition VERSION 0.1.1 LANGUAGES CXX)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+
 
 # For profiling performance
 if(PROFILE)
@@ -19,10 +21,19 @@ enable_testing()
 
 find_package(CUDAToolkit QUIET)
 if(CUDAToolkit_FOUND)
+    # Set the CUDA standard
+    set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.3/bin/nvcc)
+    set(CMAKE_CUDA_STANDARD 17)
     enable_language(CUDA)
     message(STATUS "CUDA Toolkit found, setting custom paths for OpenCL.")
     set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/include)
     set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/lib64)
+
+    set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+
+    # Automatically detect the GPU architecture
+    set(CMAKE_CUDA_ARCHITECTURES all)
+    set(NVCC_FLAGS "-O2")
 else()
     message(STATUS "CUDA Toolkit not found, using default OpenCL paths.")
 endif()
@@ -33,6 +44,8 @@ set(APPLICATION_SOURCE
     src/image.cpp
     src/opencl_image.cpp
     src/viola_jones.cpp
+    src/cuda_image.cu
+    src/cuda_kernels.cu
 )
 
 set(APPLICATION_HEADERS 
@@ -54,7 +67,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
 
 target_link_directories(${PROJECT_NAME} PRIVATE /usr/lib/x86_64-linux-gnu)
 find_package(OpenMP REQUIRED)
-find_package(OpenCL REQUIRED)
+find_package(OpenCL QUIET)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCL_LIBRARIES} OpenMP::OpenMP_CXX)
 
 
