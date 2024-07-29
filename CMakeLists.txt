@@ -124,6 +124,14 @@ set(TEST_SOURCE
     src/viola_jones.cpp
     
 )
+
+if(CUDAToolkit_FOUND)
+    list(APPEND TEST_SOURCE
+        src/cuda_image.cu
+        src/cuda_kernels.cu
+    )
+endif()
+
 add_executable(${PROJECT_NAME}_test ${TEST_SOURCE})
 target_include_directories(${PROJECT_NAME}_test PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_test PRIVATE ${OpenCL_LIBRARIES} OpenMP::OpenMP_CXX GTest::gtest_main)

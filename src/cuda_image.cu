@@ -162,3 +162,43 @@ void CUDAImageProcessor::flipYvector(Image& image) {
 
     cudaFree(data_d);
 }
+
+void CUDAImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
+
+    // Allocate memory buffers
+    size_t bytes_i = image.size * sizeof(uint8_t);
+    size_t bytes_o = nw * nh * image.channels * sizeof(uint8_t);
+
+
+    uint8_t *data_d, *output_d;
+    cudaMalloc(&data_d, bytes_i);
+    cudaMalloc(&output_d, bytes_o);
+
+    cudaMemcpy(data_d, image.data, bytes_i, cudaMemcpyHostToDevice);
+
+    int GRID_X = (nw + THREADS - 1) / THREADS;
+    int GRID_Y = (nh + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    float scaleX = (float) (image.w-1) / (nw-1);
+    float scaleY = (float) (image.h-1) / (nh-1);
+
+    resize_bilinear_cu<<<grid_dim, block_dim>>>(data_d, output_d, nw, nh, image.w, image.h, image.channels, scaleX, scaleY);
+    cudaDeviceSynchronize();
+
+    image.size = nw * nh * image.channels;
+	uint8_t* newData = new uint8_t[image.size];
+    image.w = nw;
+	image.h = nh;
+	delete[] image.data;
+	image.data = newData;
+	newData = nullptr;
+
+    cudaMemcpy(image.data, output_d, bytes_o, cudaMemcpyDeviceToHost);
+
+    cudaFree(data_d);
+    cudaFree(output_d);
+
+}

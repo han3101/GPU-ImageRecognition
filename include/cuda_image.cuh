@@ -1,7 +1,7 @@
 #pragma once
 
 #include "image.h"
-#include "cuda_kernels.cuh"
+// #include "cuda_kernels.cuh"
 #include <cuda_runtime.h>
 #include <stdint.h>
 
@@ -18,6 +18,8 @@ public:
     void flipY(Image &image);
     void flipYvector(Image &image);
 
+    void resizeBilinear(Image& image, int nw, int nh);
+
     void std_convolve_clamp_to_0(Image &image, const Mask::BaseMask *mask);
     void std_convolve_clamp_to_border(Image &image, const Mask::BaseMask *mask);
 
@@ -27,3 +29,16 @@ public:
 private:
     int THREADS = 32;
 };
+
+
+__global__ void grayscale_avg_cu(const unsigned char *data, unsigned char *output, int channels);
+
+__global__ void grayscale_lum_cu(const unsigned char *data, unsigned char *output, int channels);
+
+__global__ void flipX_cu(unsigned char *data, int w, int h, int channels);
+
+__global__ void flipY_cu(unsigned char *data, int w, int h, int channels);
+
+__global__ void flipYvector_cu(uchar3 *data, int w, int h);
+
+__global__ void resize_bilinear_cu(unsigned char *data, unsigned char *output, int nw, int nh, int w, int h, int channels, float scaleX, float scaleY);

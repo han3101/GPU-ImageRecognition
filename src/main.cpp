@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
     CUDAImageProcessor cudap;
 
     cudap.flipYvector(tkl);
+    cudap.resizeBilinear(tkl, 2000, 2000);
+    // processor.resizeBilinear(tkl, 2000, 2000);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;

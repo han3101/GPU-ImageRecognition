@@ -167,6 +167,8 @@ Image& Image::diffmap_cpu(Image& img) {
 	int compare_width = fmin(w,img.w);
 	int compare_height = fmin(h,img.h);
 	int compare_channels = fmin(channels,img.channels);
+
+	#pragma omp parallel for collapse(2)
 	for(uint32_t i=0; i<compare_height; ++i) {
 		for(uint32_t j=0; j<compare_width; ++j) {
 			for(uint8_t k=0; k<compare_channels; ++k) {

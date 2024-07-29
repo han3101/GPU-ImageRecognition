@@ -2,6 +2,9 @@
 
 #include "image.h"
 #include "opencl_image.h"
+#ifdef USE_CUDA
+#include "cuda_image.cuh"
+#endif
 #include "masks.h"
 #include <cstdlib>
 #include <iostream>
@@ -335,3 +338,23 @@ TEST(ImageTest, OpenCLIntegralsum) {
         
     }
 }
+
+#ifdef USE_CUDA
+TEST(CudaTest, ResizeTest) {
+
+    Image testHD("imgs/cat.jpeg");
+    Image cpu = testHD;
+
+    cpu.resizeBilinear_cpu(512, 512);
+
+    CUDAImageProcessor cudap;
+    cudap.resizeBilinear(testHD, 512, 512);
+
+    cpu.diffmap_cpu(testHD);
+
+    int is_black = is_image_black(cpu);
+
+    EXPECT_EQ(is_black, 1);
+
+}
+#endif
