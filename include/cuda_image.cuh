@@ -23,7 +23,7 @@ public:
     void std_convolve_clamp_to_0(Image &image, const Mask::BaseMask *mask);
     void std_convolve_clamp_to_border(Image &image, const Mask::BaseMask *mask);
 
-    void integralImage(Image& image, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt,  std::unique_ptr<u_int32_t[]>& integralImageSobel);
+    void integralImage(Image& image, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt);
     void evalStages(Image& image, std::vector<double>& haar, std::vector<int>& results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, std::unique_ptr<u_int32_t[]>& integralImageSobel, int blockWidth, int blockHeight, float scale, float inverseArea, int step, float edgeDensity);
 
 private:
@@ -42,3 +42,6 @@ __global__ void flipY_cu(unsigned char *data, int w, int h, int channels);
 __global__ void flipYvector_cu(uchar3 *data, int w, int h);
 
 __global__ void resize_bilinear_cu(unsigned char *data, unsigned char *output, int nw, int nh, int w, int h, int channels, float scaleX, float scaleY);
+
+__global__ void integralImage_cu(unsigned char *data, u_int32_t *integralImage, u_int32_t *integralImageSquare, u_int32_t *integralImageTilt, int width, int height);
+

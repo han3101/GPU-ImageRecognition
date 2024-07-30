@@ -357,4 +357,31 @@ TEST(CudaTest, ResizeTest) {
     EXPECT_EQ(is_black, 1);
 
 }
+
+TEST(CudaTest, integralImage) {
+
+    Image testHD("imgs/tkl.jpg");
+
+    std::unique_ptr<u_int32_t[]> integralImage(new uint32_t[testHD.w * testHD.h]);
+    std::unique_ptr<uint32_t[]> integralImageSquare(new uint32_t[testHD.w * testHD.h]);
+    std::unique_ptr<uint32_t[]> integralImageTilt(new uint32_t[testHD.w * testHD.h]);
+    std::unique_ptr<uint32_t[]> integralImage_cpu(new uint32_t[testHD.w * testHD.h]);
+    std::unique_ptr<uint32_t[]> integralImageSquare_cpu(new uint32_t[testHD.w * testHD.h]);
+    std::unique_ptr<uint32_t[]> integralImageTilt_cpu(new uint32_t[testHD.w * testHD.h]);
+    
+    std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
+
+    testHD.integralImage_cpu(integralImage_cpu, integralImageSobel, integralImageSquare_cpu, integralImageTilt_cpu);
+
+    CUDAImageProcessor cudap;
+    cudap.integralImage(testHD, integralImage, integralImageSquare, integralImageTilt);
+
+    for (int i = 0; i < 12; ++i) {
+        EXPECT_EQ(integralImageSquare[i], integralImageSquare_cpu[i]);
+        EXPECT_EQ(integralImage[i], integralImage_cpu[i]);
+        EXPECT_EQ(integralImageTilt[i], integralImageTilt_cpu[i]);
+        
+    }
+
+}
 #endif

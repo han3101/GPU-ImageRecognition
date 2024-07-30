@@ -130,3 +130,65 @@ __global__ void resize_bilinear_cu(unsigned char *data, unsigned char *output, i
 
     }
 }
+
+
+__global__ void integralImage_cu(unsigned char *data, u_int32_t *integralImage, u_int32_t *integralImageSquare, u_int32_t *integralImageTilt, int width, int height) {
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (row >= height || col >= width) {
+        return;
+    }
+
+    // Load initial data into integral images
+    integralImage[row * width + col] = static_cast<uint32_t>(data[row * width + col]);
+    if (integralImageSquare) {
+			integralImageSquare[row * width + col] = static_cast<uint32_t>(data[row * width + col] * data[row * width + col]);
+		}
+    if (integralImageTilt) {
+        integralImageTilt[row * width + col] = static_cast<uint32_t>(data[row * width + col]);
+    }
+
+    __syncthreads();
+    
+    // Row prefix
+    if (col == 0) {
+        for (int i = 1; i < width; i++) {
+            integralImage[row * width + i] += integralImage[row * width + (i-1)];
+            if (integralImageSquare) {
+                integralImageSquare[row * width + i] += integralImageSquare[row * width + (i-1)];
+            }
+            // RSAT
+            if (integralImageTilt && row > 0) {
+                integralImageTilt[row * width + i] += integralImageTilt[(row-1) * width + (i-1)];
+            }
+        }
+    }
+    
+
+    __syncthreads();
+
+    // Col prefix sum
+    if (row == 0) {
+        for (int j=1; j < height; j++) {
+            integralImage[j * width + col] += integralImage[(j-1) * width + col];
+            if (integralImageSquare) {
+                integralImageSquare[j * width + col] += integralImageSquare[(j-1) * width + col];
+            }
+
+            if (integralImageTilt) {
+				integralImageTilt[j * width + col] += integralImageTilt[(j - 1) * width + col];
+				if (col > 0) {
+					integralImageTilt[j * width + col] += integralImageTilt[(j - 1) * width + (col - 1)];
+				}
+				if (col < width - 1) {
+					integralImageTilt[j * width + col] += integralImageTilt[(j - 1) * width + (col + 1)];
+				}
+				if (j > 1) {
+					integralImageTilt[j * width + col] -= integralImageTilt[(j - 2) * width + col];
+				}
+			}
+        }
+    }
+
+}

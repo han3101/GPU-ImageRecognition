@@ -74,9 +74,21 @@ set(INCLUDE_DIRS /user/include ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
 
 target_link_directories(${PROJECT_NAME} PRIVATE /usr/lib/x86_64-linux-gnu)
+
+# OPEN MP
 find_package(OpenMP REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
+
+# OPENCL requirements
 find_package(OpenCL QUIET)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCL_LIBRARIES} OpenMP::OpenMP_CXX)
+find_package(OpenCL QUIET)
+if (OpenCL_FOUND)
+    message(STATUS "OpenCL found")
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCL_LIBRARIES})
+else()
+    message(WARNING "OpenCL not found. OpenCL-related functionality will be disabled.")
+    add_definitions(-DNO_OPENCL)
+endif()
 
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

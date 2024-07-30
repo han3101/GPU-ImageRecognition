@@ -202,3 +202,52 @@ void CUDAImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
     cudaFree(output_d);
 
 }
+
+void CUDAImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt) {
+
+    if (image.channels > 1) {
+        this->grayscale_lum(image);
+    }
+
+    // Allocate memory buffers
+    size_t bytes_i = image.size * sizeof(uint8_t);
+    size_t bytes_o = image.w * image.h * sizeof(u_int32_t);
+
+
+    uint8_t *data_d;
+    u_int32_t *integralImage_d, *integralImageSquare_d, *integralImageTilt_d;
+    cudaMalloc(&data_d, bytes_i);
+    cudaMalloc(&integralImage_d, bytes_o);
+    if (integralImageSquare) {
+        cudaMalloc(&integralImageSquare_d, bytes_o);
+    }
+    if (integralImageTilt) {
+        cudaMalloc(&integralImageTilt_d, bytes_o);
+    }
+    
+
+    cudaMemcpy(data_d, image.data, bytes_i, cudaMemcpyHostToDevice);
+
+    int GRID_X = (image.w + THREADS - 1) / THREADS;
+    int GRID_Y = (image.h + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    integralImage_cu<<<grid_dim, block_dim>>>(data_d, integralImage_d, integralImageSquare_d, integralImageTilt_d, image.w, image.h);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(integralImage.get(), integralImage_d, bytes_o, cudaMemcpyDeviceToHost);
+    if (integralImageSquare) {
+        cudaMemcpy(integralImageSquare.get(), integralImageSquare_d, bytes_o, cudaMemcpyDeviceToHost);
+    }
+    if (integralImageTilt) {
+        cudaMemcpy(integralImageTilt.get(), integralImageTilt_d, bytes_o, cudaMemcpyDeviceToHost);
+    }
+
+    cudaFree(data_d);
+    cudaFree(integralImage_d);
+    if (integralImageSquare) cudaFree(integralImageSquare_d);
+    if (integralImageTilt) cudaFree(integralImageTilt_d);
+}
+
