@@ -203,6 +203,48 @@ void CUDAImageProcessor::resizeBilinear(Image& image, int nw, int nh) {
 
 }
 
+void CUDAImageProcessor::std_convolve_clamp_to_0(Image &image, const Mask::BaseMask *mask) {
+
+    uint32_t MASK_W = mask->getWidth(), MASK_OFFSET_W = mask->getCenterColumn();
+    uint32_t MASK_H = mask->getHeight(), MASK_OFFSET_H = mask->getCenterRow();
+	const double* ker = mask->getData(); 
+
+    size_t bytes_i = image.size * sizeof(uint8_t);
+    size_t bytes_m = MASK_W * MASK_H * sizeof(double);
+
+    uint8_t *data_d, *result_d;
+    double *mask_d;
+    cudaMalloc(&data_d, bytes_i);
+    cudaMalloc(&result_d, bytes_i);
+    cudaMalloc(&mask_d, bytes_m);
+
+    cudaMemcpy(data_d, image.data, bytes_i, cudaMemcpyHostToDevice);
+    cudaMemcpy(mask_d, ker, bytes_m, cudaMemcpyHostToDevice);
+
+    // if (MASK_H == 3) { 
+    //     checkCudaError(cudaMemcpyToSymbol(mask3, ker, bytes_m), "Failed to copy mask3 to constant memory");
+    // }
+    // if (MASK_H == 5) cudaMemcpyToSymbol(mask5, ker, bytes_m);
+
+    // cudaDeviceSynchronize();
+
+    this->THREADS = 16;
+
+    int GRID_X = (image.w + THREADS - 1) / THREADS;
+    int GRID_Y = (image.h + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    convolve_0_cu<<<grid_dim, block_dim>>>(data_d, result_d, image.w, image.h, image.channels, MASK_H, MASK_OFFSET_H, THREADS, mask_d);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(image.data, result_d, bytes_i, cudaMemcpyDeviceToHost);
+
+    cudaFree(data_d);
+    cudaFree(result_d);
+}
+
 void CUDAImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt) {
 
     if (image.channels > 1) {

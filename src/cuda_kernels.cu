@@ -131,6 +131,51 @@ __global__ void resize_bilinear_cu(unsigned char *data, unsigned char *output, i
     }
 }
 
+__global__ void convolve_0_cu(unsigned char *data, unsigned char *result, int w, int h, int channels, int mask_dim, int mask_offset, const int TILE_SIZE, double *mask) {
+
+    // __shared__ unsigned char tile[TILE_SIZE + mask_dim - 1][TILE_SIZE + mask_dim - 1];
+
+    // const double* mask = (mask_dim == 3) ? mask3 : mask5;
+
+    // int row = blockIdx.y * TILE_SIZE + threadIdx.y;
+    // int col = blockIdx.x * TILE_SIZE + threadIdx.x;
+
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+    // printf("row: %f, col: %f\n", mask3[0],  mask3[1]);
+
+    for (int ch = 0; ch < channels; ch++) {
+        int start_r = row - mask_offset;
+        int start_c = col - mask_offset;
+
+        // Load the data into shared memory with boundary check
+        // if (start_r >= 0 && start_r < w*h && start_c >= 0 && start_c < w*h) {
+        //     tile[threadIdx.y][threadIdx.x] = data[start_r * w*h + start_c];
+        // } else {
+        //     tile[threadIdx.y][threadIdx.x] = 0;
+        // }
+
+        float temp = 0;
+
+        for (int i = 0; i < mask_dim; i++) {
+            for (int j = 0; j < mask_dim; ++j) {
+                if ((start_r + i) >= 0 && (start_r + i) < h) {
+                    if ((start_c + j) >= 0 && (start_c + j) < w) {
+                        // Accumulate results
+                        
+                        temp += static_cast<double>(data[((start_r + i) * w + (start_c + j)) * channels + ch]) * mask[i * mask_dim + j];
+                    }
+                }
+            }
+        }
+        // Write back the result
+        result[(row * w + col) * channels + ch] = (unsigned char) clamp(static_cast<int>(temp), 0, 255);
+    }
+
+    
+}
+
 
 __global__ void integralImage_cu(unsigned char *data, u_int32_t *integralImage, u_int32_t *integralImageSquare, u_int32_t *integralImageTilt, int width, int height) {
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -150,7 +195,7 @@ __global__ void integralImage_cu(unsigned char *data, u_int32_t *integralImage, 
     }
 
     __syncthreads();
-    
+
     // Row prefix
     if (col == 0) {
         for (int i = 1; i < width; i++) {

@@ -14,10 +14,10 @@
 int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
-    // Image cat("imgs/cat.jpeg");
-    Image tkl("imgs/tkl.jpg");
+    Image cat("imgs/cat.jpeg");
+    // Image tkl("imgs/tkl.jpg");
 
-    // Image gpu_test = testHD;
+    Image gpu_test = cat;
 
     // std::cout<<cat.channels<<"\n";
 
@@ -42,28 +42,28 @@ int main(int argc, char** argv) {
     // cat.std_convolve_clamp_to_0_cpu(1, &sobelY);
     // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
-    ViolaJones faceTrack;
-    OpenCLImageProcessor processor;
-    HaarCasscades haar;
-    faceTrack.set_stepSize(1.5);
-
-    Image colortkl = tkl;
-    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
-    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
-    
-    std::cout<<"Before draw"<<"\n";
-    faceTrack.draw(colortkl, faces);
-
-
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
-
-    colortkl.write("output/lbp.jpeg");
-
-
+    // ViolaJones faceTrack;
     // OpenCLImageProcessor processor;
-    // processor.std_convolve_clamp_to_0(tkl, &sobelX);
+    // HaarCasscades haar;
+    // faceTrack.set_stepSize(1.5);
+
+    // Image colortkl = tkl;
+    // // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
+    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
+    
+    // std::cout<<"Before draw"<<"\n";
+    // faceTrack.draw(colortkl, faces);
+
+
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> elapsed = end - start;
+    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+
+    // colortkl.write("output/lbp.jpeg");
+
+
+    OpenCLImageProcessor processor;
+    processor.std_convolve_clamp_to_0(cat, &sobelX);
     // processor.std_convolve_clamp_to_0(tkl, &sobelY);
     // // processor.diffmap(gpu_cat, test);
     // // processor.resizeBicubic(gpu_test, gpu_test.w, gpu_test.h * 1.5);
@@ -74,16 +74,20 @@ int main(int argc, char** argv) {
 
     // processor.flipX(tkl);
 
-    // CUDAImageProcessor cudap;
+    CUDAImageProcessor cudap;
 
-    // cudap.flipYvector(tkl);
+    cudap.std_convolve_clamp_to_0(gpu_test, &sobelX);
+
+    gpu_test.write("output/cat_gpu.jpeg");
+
+    cat.diffmap_cpu(gpu_test);
     // cudap.resizeBilinear(tkl, 2000, 2000);
     // // processor.resizeBilinear(tkl, 2000, 2000);
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
-    // tkl.write("output/diff.jpeg");
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
+    cat.write("output/diff.jpeg");
 
 	return 0;
 }

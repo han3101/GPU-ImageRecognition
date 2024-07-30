@@ -141,7 +141,7 @@ set(TEST_SOURCE
 )
 
 if(OpenCL_FOUND)
-    list(APPEND APPLICATION_SOURCE
+    list(APPEND TEST_SOURCE
         src/opencl_image.cpp
     )
 endif()

@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "image.h"
+#ifdef USE_OPENCL
 #include "opencl_image.h"
+#endif
 #ifdef USE_CUDA
 #include "cuda_image.cuh"
 #endif
@@ -397,4 +399,28 @@ TEST(CudaTest, integralImage) {
     }
 
 }
+
+    #ifdef USE_OPENCL
+    TEST(CudaTest, convolve) {
+
+        Image testHD("imgs/cat.jpeg");
+        Image cpu = testHD;
+
+        Mask::EdgeSobelX sobelX;
+
+        OpenCLImageProcessor processor;
+        processor.std_convolve_clamp_to_0(cpu, &sobelX);
+
+        CUDAImageProcessor cudap;
+        cudap.std_convolve_clamp_to_0(testHD, &sobelX);
+
+        cpu.diffmap_cpu(testHD);
+
+        int is_black = is_image_black(cpu);
+
+        EXPECT_EQ(is_black, 1);
+
+    }
+    #endif
+
 #endif
