@@ -1,7 +1,9 @@
 #pragma once
 #include "image.h"
 #include "masks.h"
+#if USE_OPENCL
 #include "opencl_image.h"
+#endif
 #include "haarCasscades.h"
 #include <vector>
 #include <unordered_map>
@@ -22,7 +24,10 @@ public:
     ~ViolaJones() {};
 
     std::vector<Rect> detect(Image& image, std::vector<double> haar);
+
+#if USE_OPENCL
     std::vector<Rect> detect(Image& image, std::vector<double> haar, OpenCLImageProcessor& opencl);
+#endif
 
     void draw(Image& image, std::vector<Rect> faces);
     bool intersect_rect(Rect rect1, Rect rect2);

@@ -41,13 +41,27 @@ else()
     message(STATUS "CUDA Toolkit not found, using default OpenCL paths.")
 endif()
 
+# OPENCL requirements
+find_package(OpenCL QUIET)
+if (OpenCL_FOUND)
+    message(STATUS "OpenCL found")
+    add_definitions(-DUSE_OPENCL)
+else()
+    message(WARNING "OpenCL not found. OpenCL-related functionality will be disabled.")
+endif()
+
 # Build program
 set(APPLICATION_SOURCE 
     src/main.cpp
     src/image.cpp
-    src/opencl_image.cpp
     src/viola_jones.cpp
 )
+
+if(OpenCL_FOUND)
+    list(APPEND APPLICATION_SOURCE
+        src/opencl_image.cpp
+    )
+endif()
 
 if(CUDAToolkit_FOUND)
     list(APPEND APPLICATION_SOURCE
@@ -78,16 +92,8 @@ target_link_directories(${PROJECT_NAME} PRIVATE /usr/lib/x86_64-linux-gnu)
 # OPEN MP
 find_package(OpenMP REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE OpenMP::OpenMP_CXX)
-
-# OPENCL requirements
-find_package(OpenCL QUIET)
-find_package(OpenCL QUIET)
 if (OpenCL_FOUND)
-    message(STATUS "OpenCL found")
     target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenCL_LIBRARIES})
-else()
-    message(WARNING "OpenCL not found. OpenCL-related functionality will be disabled.")
-    add_definitions(-DNO_OPENCL)
 endif()
 
 
@@ -129,13 +135,16 @@ FetchContent_MakeAvailable(googletest)
 
 include(GoogleTest)
 set(TEST_SOURCE 
-
     src/test.cc
     src/image.cpp
-    src/opencl_image.cpp
     src/viola_jones.cpp
-    
 )
+
+if(OpenCL_FOUND)
+    list(APPEND APPLICATION_SOURCE
+        src/opencl_image.cpp
+    )
+endif()
 
 if(CUDAToolkit_FOUND)
     list(APPEND TEST_SOURCE

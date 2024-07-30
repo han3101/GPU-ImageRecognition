@@ -58,6 +58,7 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar) {
     return this->merge_rectangles(image, rects);
 }
 
+#if USE_OPENCL
 std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, OpenCLImageProcessor& opencl) {
 
     int total = 0;
@@ -128,6 +129,7 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
     
     return this->merge_rectangles(image, rects);
 }
+#endif
 
 std::vector<Rect> ViolaJones::merge_rectangles(Image& image, std::vector<Rect> rects) {
 

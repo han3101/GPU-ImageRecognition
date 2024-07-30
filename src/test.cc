@@ -371,10 +371,23 @@ TEST(CudaTest, integralImage) {
     
     std::unique_ptr<uint32_t[]> integralImageSobel = nullptr;
 
-    testHD.integralImage_cpu(integralImage_cpu, integralImageSobel, integralImageSquare_cpu, integralImageTilt_cpu);
+    auto start = std::chrono::high_resolution_clock::now();
+
+    testHD.integralImage_mp(integralImage_cpu, integralImageSobel, integralImageSquare_cpu, integralImageTilt_cpu);
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
     CUDAImageProcessor cudap;
+
+    start = std::chrono::high_resolution_clock::now();
+
     cudap.integralImage(testHD, integralImage, integralImageSquare, integralImageTilt);
+
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+    std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
     for (int i = 0; i < 12; ++i) {
         EXPECT_EQ(integralImageSquare[i], integralImageSquare_cpu[i]);
