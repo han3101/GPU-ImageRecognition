@@ -293,3 +293,39 @@ void CUDAImageProcessor::integralImage(Image& image, std::unique_ptr<u_int32_t[]
     if (integralImageTilt) cudaFree(integralImageTilt_d);
 }
 
+void CUDAImageProcessor::evalStages(Image& image, std::vector<double>& haar, std::vector<int>& results, std::unique_ptr<u_int32_t[]>& integralImage, std::unique_ptr<u_int32_t[]>& integralImageSquare, std::unique_ptr<u_int32_t[]>& integralImageTilt, int blockWidth, int blockHeight, float scale, float inverseArea, int step) {
+    
+    size_t bytes_h = haar.size() * sizeof(double);
+    size_t bytes_r = image.size * sizeof(int);
+    size_t bytes_i = image.size * sizeof(u_int32_t);
+
+
+    int *results_d;
+    u_int32_t *integralImage_d, *integralImageSquare_d, *integralImageTilt_d;
+    double* haar_d;
+
+    cudaMalloc(&results_d, bytes_r);
+    cudaMalloc(&integralImage_d, bytes_i);
+    cudaMalloc(&integralImageSquare_d, bytes_i);
+    cudaMalloc(&integralImageTilt_d, bytes_i);
+    cudaMalloc(&haar_d, bytes_h);
+
+
+    cudaMemcpy(integralImage_d, integralImage.get(), bytes_i, cudaMemcpyHostToDevice);
+    cudaMemcpy(integralImageSquare_d, integralImageSquare.get(), bytes_i, cudaMemcpyHostToDevice);
+    cudaMemcpy(integralImageTilt_d, integralImageTilt.get(), bytes_i, cudaMemcpyHostToDevice);
+    cudaMemcpy(haar_d, haar.data(), bytes_h, cudaMemcpyHostToDevice);
+
+    int GRID_X = (image.w + THREADS - 1) / THREADS;
+    int GRID_Y = (image.h + THREADS - 1) / THREADS;
+
+    dim3 block_dim(THREADS, THREADS);
+    dim3 grid_dim(GRID_X, GRID_Y);
+
+    evalStages_cu<<<grid_dim, block_dim>>>(haar_d, results_d, integralImage_d, integralImageSquare_d, integralImageTilt_d, haar.size(), image.w, image.h, blockWidth, blockHeight, scale, inverseArea, step);
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(results.data(), results_d, bytes_r, cudaMemcpyDeviceToHost);
+
+}
+

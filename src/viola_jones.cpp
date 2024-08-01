@@ -131,6 +131,79 @@ std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, Ope
 }
 #endif
 
+#if USE_CUDA
+std::vector<Rect> ViolaJones::detect(Image& image, std::vector<double> haar, CUDAImageProcessor& cudap) {
+
+    int total = 0;
+    std::vector<Rect> rects;
+
+    if (m_edgeDensity > 0) {
+        image.integralImageSobel = std::make_unique<uint32_t[]>(image.w * image.h);
+    }
+
+
+    if (image.integralImage == nullptr) {
+        // image.integralImage_cpu();
+        image.integralImage_mp();
+    }
+
+    // opencl.integralImage(image, image.integralImage, image.integralImageSquare, image.integralImageTilt, image.integralImageSobel);
+
+    double minWidth = haar[0];
+    double minHeight = haar[1];
+    float scale = m_initialScale * m_scaleFactor;
+    int blockWidth = static_cast<int>(scale * minWidth);
+    int blockHeight = static_cast<int>(scale * minHeight);
+
+    while (blockWidth < image.w && blockHeight < image.h) {
+        int step = static_cast<int>(scale * m_stepSize);
+        float inverseArea = (float) 1.0 / (blockWidth * blockHeight);
+
+        std::vector<int> results((image.h) * (image.w));
+
+        cudap.evalStages(image, haar, results, image.integralImage, image.integralImageSquare, image.integralImageTilt, blockWidth, blockHeight, scale, inverseArea, step); 
+
+
+        int count = 0;
+        for (int i=0; i < results.size(); i++) {
+            if (results[i] == 1) count++;
+        }
+        
+        for (int i=0; i<(image.h-blockHeight); i+= step) {
+            for (int j=0; j<(image.w-blockWidth); j+= step) {
+
+                // if (m_edgeDensity > 0) {
+                //     if (this->edgeExclude(m_edgeDensity, image.integralImageSobel, i, j, image.w, blockWidth, blockHeight)) {
+                //         continue;
+                //     }
+                // }
+
+                // std::cout<<results[0]<<"\n";
+
+                if (results[i * image.w + j] == 1) {
+                    total++;
+                    rects.emplace_back(Rect{
+                        0,
+                        blockWidth,
+                        blockHeight,
+                        j,
+                        i
+                    });
+                }
+
+            }
+        }
+
+                
+        scale *= m_scaleFactor;
+        blockWidth = static_cast<int>(scale * minWidth);
+        blockHeight = static_cast<int>(scale * minHeight);
+    }
+    
+    return this->merge_rectangles(image, rects);
+}
+#endif
+
 std::vector<Rect> ViolaJones::merge_rectangles(Image& image, std::vector<Rect> rects) {
 
     int num_recs = rects.size();

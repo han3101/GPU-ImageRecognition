@@ -4,6 +4,9 @@
 #if USE_OPENCL
 #include "opencl_image.h"
 #endif
+#if USE_CUDA
+#include "cuda_image.cuh"
+#endif
 #include "haarCasscades.h"
 #include <vector>
 #include <unordered_map>
@@ -27,6 +30,10 @@ public:
 
 #if USE_OPENCL
     std::vector<Rect> detect(Image& image, std::vector<double> haar, OpenCLImageProcessor& opencl);
+#endif
+
+#if USE_CUDA
+    std::vector<Rect> detect(Image& image, std::vector<double> haar, CUDAImageProcessor& cudap);
 #endif
 
     void draw(Image& image, std::vector<Rect> faces);
