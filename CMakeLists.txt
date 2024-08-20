@@ -22,17 +22,22 @@ enable_testing()
 find_package(CUDAToolkit QUIET)
 if(CUDAToolkit_FOUND)
     # Set the CUDA standard
-    set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.3/bin/nvcc)
+    # set(CMAKE_CUDA_COMPILER /usr/local/cuda-12.3/bin/nvcc)
+    set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
     set(CMAKE_CUDA_STANDARD 17)
-    enable_language(CUDA)
-    message(STATUS "CUDA Toolkit found, setting custom paths for OpenCL.")
-    set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/include)
-    set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/lib64)
-
     set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 
-    # Automatically detect the GPU architecture
     set(CMAKE_CUDA_ARCHITECTURES "60;70;75;80")
+    
+    enable_language(CUDA)
+    message(STATUS "CUDA Toolkit found, setting custom paths for OpenCL.")
+    # set(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/include)
+    # set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /usr/local/cuda-12.3/targets/x86_64-linux/lib64)
+    include_directories(${CUDAToolkit_INCLUDE_DIRS})
+    link_directories(${CUDAToolkit_LIBRARY_DIRS})
+
+
+    # Automatically detect the GPU architecture
     set(NVCC_FLAGS "-O2")
 
     # Preprocessor macro for CUDA

@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 	// Image test("imgs/test.png");
     // Image testHD("imgs/testHD.jpeg");
     // Image cat("imgs/cat.jpeg");
-    Image tkl("imgs/tkl.jpg");
+    Image tkl("imgs/girl.jpg");
 
     // Image gpu_test = cat;
 
@@ -32,6 +32,9 @@ int main(int argc, char** argv) {
     // Timing the computation
     auto start = std::chrono::high_resolution_clock::now();
 
+    // tkl.grayscale_cpu();
+
+
     // cat.grayscale_avg_lum();
     // cat.local_binary_pattern_cpu();
     // cat.std_convolve_clamp_to_0_cpu(0, &sobelX);
@@ -42,26 +45,28 @@ int main(int argc, char** argv) {
     // cat.std_convolve_clamp_to_0_cpu(1, &sobelY);
     // cat.std_convolve_clamp_to_0_cpu(2, &sobelY);
 
-    ViolaJones faceTrack;
-    OpenCLImageProcessor processor;
+    // ViolaJones faceTrack;
+    // OpenCLImageProcessor processor;
     CUDAImageProcessor cudap;
-    HaarCasscades haar;
-    faceTrack.set_stepSize(1.5);
+    // HaarCasscades haar;
+    // faceTrack.set_stepSize(1.5);
 
-    Image colortkl = tkl;
+    // Image colortkl = tkl;
     // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face);
     // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, processor);
-    std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, cudap);
+    // std::vector<Rect> faces = faceTrack.detect(tkl, haar.haar_face, cudap);
     
-    std::cout<<"Before draw"<<"\n";
-    faceTrack.draw(colortkl, faces);
+    // std::cout<<"Before draw"<<"\n";
+    // faceTrack.draw(colortkl, faces);
+
+    cudap.grayscale_avg(tkl);
 
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
 
-    colortkl.write("output/lbp.jpeg");
+    // colortkl.write("output/lbp.jpeg");
 
 
     // OpenCLImageProcessor processor;
@@ -74,7 +79,8 @@ int main(int argc, char** argv) {
     // // processor.diffmap(gpu_test, gpu_test);
     // // processor.local_binary_pattern(cat);
 
-    // processor.flipX(tkl);
+    // processor.grayscale_avg(tkl);
+    
 
     // CUDAImageProcessor cudap;
 
@@ -90,6 +96,8 @@ int main(int argc, char** argv) {
     // std::chrono::duration<double> elapsed = end - start;
     // std::cout << "Time taken for computation: " << elapsed.count() * 1000 << " ms" << std::endl;
     // cat.write("output/diff.jpeg");
+
+    tkl.write("output/lbp.jpeg");
 
 	return 0;
 }
